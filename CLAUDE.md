@@ -13,10 +13,13 @@ Analyzes CTA Frequent Network bus routes to determine:
 
 ## Key commands
 - `uv sync` — install all deps
-- `uv run pytest` — run all tests
+- `uv run pytest` — run all tests (119 passing)
 - `uv run pytest tests/test_ridership.py -v` — run specific test file
 - `uv run python -m bus_check.collector.headway_collector` — run headway collector
-- `uv run jupyter lab` — open notebooks
+- `uv pip install -e . && uv run --no-sync jupyter lab` — open notebooks
+- `uv pip install -e . && uv run --no-sync jupyter execute notebooks/<NB>.ipynb --inplace` — execute a notebook
+
+**Critical:** Always use `uv pip install -e .` before `uv run --no-sync` for Jupyter. Plain `uv run` (without `--no-sync`) re-syncs and drops the editable install, causing `ModuleNotFoundError`.
 
 ## Project layout
 - `src/bus_check/config.py` — all route/phase/service-window constants
