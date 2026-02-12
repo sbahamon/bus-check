@@ -12,6 +12,7 @@ dependencies = [
     "seaborn>=0.13",
     "jupyter>=1.0",
     "schedule>=1.2",
+    "python-dateutil>=2.8",
     "python-dotenv>=1.0",
     "csdid>=0.2.9",
     "drdid>=1.1",
