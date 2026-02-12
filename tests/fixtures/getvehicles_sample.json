@@ -1,0 +1,74 @@
+{
+  "bustime-response": {
+    "vehicle": [
+      {
+        "vid": "8001",
+        "tmstmp": "20250401 08:00",
+        "lat": "41.751245",
+        "lon": "-87.654321",
+        "hdg": "90",
+        "pid": 7901,
+        "rt": "79",
+        "des": "Lakefront",
+        "pdist": 15000,
+        "dly": false,
+        "spd": 25,
+        "tablockid": "79 -513",
+        "tatripid": "1040",
+        "origtatripno": "435826139",
+        "zone": ""
+      },
+      {
+        "vid": "8002",
+        "tmstmp": "20250401 08:00",
+        "lat": "41.751300",
+        "lon": "-87.684000",
+        "hdg": "90",
+        "pid": 7901,
+        "rt": "79",
+        "des": "Lakefront",
+        "pdist": 8500,
+        "dly": false,
+        "spd": 18,
+        "tablockid": "79 -514",
+        "tatripid": "1041",
+        "origtatripno": "435826140",
+        "zone": ""
+      },
+      {
+        "vid": "8003",
+        "tmstmp": "20250401 08:00",
+        "lat": "41.751100",
+        "lon": "-87.720000",
+        "hdg": "270",
+        "pid": 7902,
+        "rt": "79",
+        "des": "Harlem",
+        "pdist": 22000,
+        "dly": false,
+        "spd": 30,
+        "tablockid": "79 -515",
+        "tatripid": "1042",
+        "origtatripno": "435826141",
+        "zone": ""
+      },
+      {
+        "vid": "6301",
+        "tmstmp": "20250401 08:00",
+        "lat": "41.780500",
+        "lon": "-87.630000",
+        "hdg": "90",
+        "pid": 6301,
+        "rt": "63",
+        "des": "Stony Island",
+        "pdist": 12000,
+        "dly": false,
+        "spd": 22,
+        "tablockid": "63 -201",
+        "tatripid": "2050",
+        "origtatripno": "435826200",
+        "zone": ""
+      }
+    ]
+  }
+}
