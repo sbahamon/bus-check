@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Methodology | Bus Check</title>
+<meta name="description" content="How we analyzed CTA Frequent Network ridership impact: difference-in-differences, data sources, and eight analysis notebooks.">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="site-nav">
+  <div class="container">
+    <a href="index.html">Analysis</a>
+    <a href="headways.html">Headways</a>
+    <a href="methodology.html" class="nav-active">Methodology</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero-sm">
+  <div class="container">
+    <div class="hero-eyebrow">CTA Frequent Network Analysis</div>
+    <h1>Methodology</h1>
+    <p class="hero-subtitle">How we measured the ridership impact of CTA's Frequent Network, and what we found across eight separate analyses.</p>
+  </div>
+</header>
+
+<!-- ═══ OVERVIEW ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Overview</h2>
+    <p>In 2025, CTA designated 20 bus routes as its Frequent Network, promising 10-minute headways during service hours. We set out to answer two questions: <strong>Did ridership increase on these routes?</strong> And <strong>are the promised headways being delivered?</strong></p>
+    <p>For ridership, we use difference-in-differences (DiD), a causal inference method that compares changes over time between treated routes (Frequent Network) and control routes (similar non-FN routes). For headways, we collect real-time vehicle positions from CTA's Bus Tracker API and compare observed stop intervals against the GTFS schedule.</p>
+  </div>
+</section>
+
+<!-- ═══ THE FREQUENT NETWORK ═══ -->
+<section>
+  <div class="container prose">
+    <h2>The Frequent Network</h2>
+    <p>CTA rolled out the Frequent Network in four phases:</p>
+
+    <table class="nb-table">
+      <thead>
+        <tr><th>Phase</th><th>Launch</th><th>Routes</th><th>Post-launch data</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="did-phase-dot" style="background:var(--phase-1)"></span>Phase 1</td>
+          <td>March 23, 2025</td>
+          <td>J14, 34, 47, 54, 60, 63, 79, 95</td>
+          <td>~8 months</td>
+        </tr>
+        <tr>
+          <td><span class="did-phase-dot" style="background:var(--phase-2)"></span>Phase 2</td>
+          <td>Summer 2025</td>
+          <td>4, 49, 53, 66</td>
+          <td>~5 months</td>
+        </tr>
+        <tr>
+          <td><span class="did-phase-dot" style="background:var(--phase-3)"></span>Phase 3</td>
+          <td>Fall 2025</td>
+          <td>20, 55, 77, 82</td>
+          <td>~2 months</td>
+        </tr>
+        <tr>
+          <td><span class="did-phase-dot" style="background:var(--phase-4)"></span>Phase 4</td>
+          <td>December 21, 2025</td>
+          <td>9, 12, 72, 81</td>
+          <td style="color:var(--negative)">None</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Phase 2 and Phase 3 launch dates are approximate &mdash; CTA announced them as "Summer" and "Fall" 2025, respectively. We use June 15 and September 15 as working dates.</p>
+  </div>
+</section>
+
+<!-- ═══ DATA SOURCES ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Data Sources</h2>
+
+    <h3>Ridership</h3>
+    <p>Daily boardings by route from the <a href="https://data.cityofchicago.org/Transportation/CTA-Ridership-Bus-Routes-Daily-Totals/jyb9-n7fm">Chicago Data Portal SODA API</a> (dataset <code>jyb9-n7fm</code>). Public, no authentication required. Our data covers January 2023 through November 30, 2025 &mdash; 122,084 route-day observations across 131 routes.</p>
+
+    <h3>Real-time vehicle positions</h3>
+    <p>CTA Bus Tracker API (<code>getvehicles</code> endpoint), polled every 60 seconds for all 20 Frequent Network routes. Used to compute observed headways. See the <a href="headways.html">headway analysis page</a> for details.</p>
+
+    <h3>Schedules</h3>
+    <p>CTA GTFS static feed, which provides planned stop times, trip schedules, and route geometry (shapes). Used for scheduled headway computation and the route map.</p>
+  </div>
+</section>
+
+<!-- ═══ WHY PHASE 4 IS EXCLUDED ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Why Phase 4 Is Excluded</h2>
+    <p>Phase 4 launched on December 21, 2025, but the Chicago Data Portal ridership data ends on November 30, 2025. This means <strong>there are zero post-launch ridership observations</strong> for Phase 4 routes.</p>
+    <p>Including these routes in a DiD analysis creates artificial -100% year-over-year changes and severely biases aggregate estimates downward. All causal analyses in this project (notebooks 03, 06, 07, and 08) exclude Phase 4 routes from the treatment group.</p>
+    <p>Phase 4 routes are still shown on the map and in the headway analysis, but they are excluded from all ridership impact estimates.</p>
+  </div>
+</section>
+
+<!-- ═══ DIFFERENCE-IN-DIFFERENCES ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Difference-in-Differences</h2>
+    <p>DiD compares the change in ridership for treated routes (Frequent Network) against the change for untreated control routes over the same period. If both groups would have followed the same trend absent treatment, the difference in their changes estimates the causal effect.</p>
+    <p>Control routes are selected from non-FN routes based on pre-treatment ridership similarity. For each phase, already-treated routes from earlier phases are excluded from the control pool to prevent contamination.</p>
+
+    <h3>Why pooled DiD is misleading</h3>
+    <p>A simple pooled DiD across all routes produces a <strong>negative</strong> estimate (-565 rides/day, -5.8%). This is misleading for two reasons:</p>
+    <ol>
+      <li><strong>Phase 4 contamination.</strong> Including routes with zero post-data creates extreme negative outliers that drag the average down.</li>
+      <li><strong>Staggered treatment bias.</strong> In standard two-way fixed-effects (TWFE) DiD, already-treated units serve as implicit controls for later-treated cohorts. When treatment effects vary across phases, this contamination biases the pooled estimate. This is a well-known problem in applied econometrics (Goodman-Bacon 2021, de Chaisemartin &amp; D'Haultfoeuille 2020).</li>
+    </ol>
+    <p>Our solution: analyze each phase separately (notebook 06), use the Callaway-Sant'Anna staggered estimator (notebook 07), and confirm with regression fixed effects (notebook 08).</p>
+
+    <h3>Confidence intervals</h3>
+    <p>Confidence intervals for the phase-level DiD are computed via <strong>cluster bootstrap</strong> (1,000 iterations, resampled at the route level). This accounts for within-route correlation in daily ridership observations. With only 16 treated and ~15 control routes, the small sample makes asymptotic standard errors unreliable.</p>
+  </div>
+</section>
+
+<!-- ═══ THE EIGHT NOTEBOOKS ═══ -->
+<section>
+  <div class="container prose">
+    <h2>The Analysis Pipeline</h2>
+    <p>We ran eight separate analyses, each stress-testing the findings from a different angle. The table below summarizes all eight notebooks; details on each follow.</p>
+
+    <table class="nb-table">
+      <thead>
+        <tr><th>#</th><th>Analysis</th><th>Key Finding</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="nb-num">01</td>
+          <td><strong>Ridership Exploration</strong><br>Initial EDA of all 20 routes</td>
+          <td>13/16 Phase 1&ndash;3 routes gained riders YoY; pooled DiD misleadingly negative at -5.8%</td>
+        </tr>
+        <tr>
+          <td class="nb-num">02</td>
+          <td><strong>Headway Exploration</strong><br>Scheduled vs. observed headways</td>
+          <td>Schedule: 99.8% &le; 10 min. Observed: ~73%. <a href="headways.html">Details &rarr;</a></td>
+        </tr>
+        <tr>
+          <td class="nb-num">03</td>
+          <td><strong>Phases 1&ndash;3 Only</strong><br>Excludes Phase 4</td>
+          <td>Cleaner data, but pooled DiD still negative (-4.6%) due to staggered treatment bias</td>
+        </tr>
+        <tr>
+          <td class="nb-num">04</td>
+          <td><strong>Without Route #79</strong><br>Tests if worst performer drives results</td>
+          <td>Excluding #79 makes DiD <em>worse</em> (-8.4%), ruling out single-route explanation</td>
+        </tr>
+        <tr>
+          <td class="nb-num">05</td>
+          <td><strong>Ridership Share</strong><br>FN share of total CTA ridership</td>
+          <td>FN share grows +0.26 to +0.86 pp per phase; total ridership also growing</td>
+        </tr>
+        <tr>
+          <td class="nb-num">06</td>
+          <td><strong>DiD by Phase</strong><br>Phase-level DiD with bootstrap CIs</td>
+          <td>P1: +428/day (+5.9%), P2: +586 (+4.5%), P3: +665 (+6.5%) &mdash; all positive</td>
+        </tr>
+        <tr>
+          <td class="nb-num">07</td>
+          <td><strong>Staggered DiD</strong><br>Callaway-Sant'Anna estimator</td>
+          <td>Overall ATT: +429 rides/day, statistically significant</td>
+        </tr>
+        <tr>
+          <td class="nb-num">08</td>
+          <td><strong>Regression DiD</strong><br>OLS with route + time fixed effects</td>
+          <td>+136 rides/day (p=0.07); placebo test passes (p=0.93)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ NOTEBOOK DETAILS ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Notebook Details</h2>
+
+    <details>
+      <summary>01 &mdash; Ridership Exploration</summary>
+      <div class="method-content">
+        <p>The initial exploratory analysis covering all 20 Frequent Network routes and 131 total CTA bus routes. Pulls daily ridership from the Chicago Data Portal SODA API (Jan 2023 &ndash; Nov 2025), visualizes trends by route and phase, and computes a simple pooled 2&times;2 DiD.</p>
+        <p>Key finding: 13 of 16 Phase 1&ndash;3 routes show positive year-over-year ridership changes. J14 Jeffery Jump leads at +26.1%. However, the pooled DiD is negative (-565 rides/day) because control routes grew faster than treated routes on average &mdash; and Phase 4's zero post-data contaminates the estimate.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>02 &mdash; Headway Exploration</summary>
+      <div class="method-content">
+        <p>Assesses whether Frequent Network routes actually achieve the promised 10-minute headways. Compares scheduled headways from GTFS against observed headways from CTA Bus Tracker API data.</p>
+        <p>On paper, all 20 routes schedule 97&ndash;100% of headways at 10 minutes or less. In practice, only about 73% of observed headways meet the promise. See the <a href="headways.html">headway analysis page</a> for full results and caveats about the limited data collection window.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>03 &mdash; Phases 1&ndash;3 Only</summary>
+      <div class="method-content">
+        <p>Re-runs the ridership analysis from notebook 01 but excludes Phase 4 routes entirely, since they have zero post-launch data. This gives a cleaner before/after comparison for 16 routes.</p>
+        <p>The pooled DiD estimate improves slightly to -443 rides/day (-4.6%), but remains negative. This notebook demonstrates that simply removing Phase 4 isn't enough &mdash; the fundamental problem is pooling across staggered treatment phases.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>04 &mdash; Without Route #79</summary>
+      <div class="method-content">
+        <p>Route #79 (79th Street) had the worst year-over-year performance among Phase 1 routes at -6.2%, and carries the highest baseline ridership (~15,500 rides/day). This notebook tests whether removing this single outlier flips the result.</p>
+        <p>Finding: excluding Route #79 actually <strong>worsens</strong> the pooled DiD estimate to -795 rides/day (-8.4%). This rules out the hypothesis that one underperforming route is dragging down the result. The negative pooled estimate reflects a genuine methodological issue with pooling staggered treatments, not a single bad route.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>05 &mdash; Ridership Share</summary>
+      <div class="method-content">
+        <p>A descriptive (non-causal) analysis showing the Frequent Network's share of total CTA bus ridership over time. If FN routes are gaining riders, their share of the system total should grow.</p>
+        <p>Results: FN share grows after each phase launch &mdash; +0.26 percentage points for Phase 1, +0.51 pp for Phase 2, and +0.86 pp for Phase 3 (year-over-year). Importantly, total CTA bus ridership also grew during this period, meaning the rising FN share represents genuine ridership growth, not just riders switching from other routes.</p>
+        <p>This is purely descriptive and doesn't control for confounders. See notebooks 06&ndash;08 for causal estimates.</p>
+      </div>
+    </details>
+
+    <details open>
+      <summary>06 &mdash; DiD by Phase (featured on main page)</summary>
+      <div class="method-content">
+        <p>The core analysis featured on the main page. Runs separate 2&times;2 DiD for each phase, using only never-treated routes as controls. This eliminates both Phase 4 contamination and staggered treatment bias.</p>
+        <p>Results: <strong>All three phases show positive and statistically significant ridership gains.</strong></p>
+        <ul>
+          <li>Phase 1 (8 routes, ~8 months post): +428 rides/day (+5.9%), 95% CI [+42, +799]</li>
+          <li>Phase 2 (4 routes, ~5 months post): +586 rides/day (+4.5%), 95% CI [+1, +1,271]</li>
+          <li>Phase 3 (4 routes, ~2 months post): +665 rides/day (+6.5%), 95% CI [+205, +998]</li>
+        </ul>
+        <p>Confidence intervals are computed via cluster bootstrap (1,000 iterations at the route level).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>07 &mdash; Callaway-Sant'Anna Staggered DiD</summary>
+      <div class="method-content">
+        <p>Implements the Callaway &amp; Sant'Anna (2021) estimator, which is specifically designed for settings with staggered treatment timing. Unlike standard TWFE, it avoids using already-treated units as controls for later cohorts.</p>
+        <p>The overall average treatment effect on the treated (ATT) is <strong>+429 rides/day</strong>, statistically significant. Group-level estimates are consistent with notebook 06: Phase 1 (+372), Phase 2 (+431), Phase 3 (+764). An event study shows effects growing over time, reaching +726&ndash;793 rides/day at 6&ndash;8 months post-treatment.</p>
+        <p>This is the most econometrically rigorous approach and independently confirms the phase-level findings.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>08 &mdash; Regression DiD with Fixed Effects</summary>
+      <div class="method-content">
+        <p>A standard regression approach: OLS with route and time (year-month) fixed effects, plus a treatment indicator. Provides traditional standard errors and p-values.</p>
+        <p>The basic specification estimates +136 rides/day with homoskedastic standard errors (p=0.07, marginally significant). With cluster-robust standard errors at the route level, p=0.39 &mdash; not significant, reflecting the reality that 31 routes provide limited statistical power.</p>
+        <p>Critically, a <strong>placebo test</strong> (applying fake treatment one year earlier) produces a near-zero estimate of -17 rides/day with p=0.925. This confirms there were no pre-existing differential trends between treated and control routes &mdash; a key assumption of DiD.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ═══ WHY PHASE-LEVEL DID ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Why Phase-Level DiD on the Front Page?</h2>
+    <p>We ran three different causal estimation strategies (notebooks 06, 07, and 08). All three agree that the Frequent Network had a positive effect on ridership. We feature the phase-level DiD (notebook 06) on the main page for three reasons:</p>
+
+    <h3>Most transparent</h3>
+    <p>Each phase gets its own independent before-and-after comparison with its own control group. Readers can see that Phase 1, Phase 2, and Phase 3 are each individually positive &mdash; the finding doesn't depend on aggregation hiding variation across phases.</p>
+
+    <h3>Most intuitive</h3>
+    <p>A simple &ldquo;compare treated vs. control before and after&rdquo; is easier for a general audience to grasp than Callaway-Sant&rsquo;Anna group-time average treatment effects or regression coefficients with clustered standard errors.</p>
+
+    <h3>Per-phase granularity</h3>
+    <p>The front page shows Phase 1 at +428, Phase 2 at +586, Phase 3 at +665 rides per day. A single aggregate ATT (+429 from notebook 07) loses this detail and obscures the fact that later phases show larger effects, possibly because the Frequent Network brand was better established.</p>
+
+    <h3>What the other methods add</h3>
+    <p><strong>Callaway-Sant&rsquo;Anna (notebook 07)</strong> produces an overall ATT of +429 rides/day that is statistically significant. It is the most econometrically rigorous approach for staggered treatment settings and independently confirms the phase-level findings. Its main value is as a robustness check.</p>
+    <p><strong>OLS regression (notebook 08)</strong> estimates +136 rides/day with homoskedastic standard errors (p=0.07, marginally significant), but cluster-robust standard errors yield p=0.39 &mdash; not significant at conventional levels with only 31 routes. The most valuable output is the <strong>placebo test</strong>: applying fake treatment one year earlier produces a near-zero estimate (p=0.93), confirming there were no pre-existing differential trends between treated and control routes.</p>
+    <p>In short: all three methods point in the same direction. Phase-level DiD shows it most clearly. This page exists so readers who want the full statistical picture can evaluate all eight analyses.</p>
+  </div>
+</section>
+
+<!-- ═══ LIMITATIONS ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Limitations</h2>
+    <ul>
+      <li><strong>Data ends November 30, 2025.</strong> Phase 4 has zero post-launch observations. Phase 3 has only about two months. More post-data would tighten confidence intervals and reveal whether effects persist.</li>
+      <li><strong>Approximate launch dates.</strong> Phase 2 and Phase 3 were announced as "Summer" and "Fall" 2025. We use June 15 and September 15 as working dates, but the actual rollout may have differed.</li>
+      <li><strong>Small sample.</strong> Only 20 treated routes and ~15 control routes. This limits statistical power, especially for Phases 2 and 3 (4 routes each). Cluster-robust standard errors are wide.</li>
+      <li><strong>Possible spillover effects.</strong> If the Frequent Network draws riders from nearby non-FN routes, control route ridership would decrease, biasing DiD estimates upward. We have not tested for this.</li>
+      <li><strong>No rider-level data.</strong> We observe boardings per route per day, not individual riders. We cannot distinguish new riders from riders switching from other routes or modes.</li>
+      <li><strong>Headway data is preliminary.</strong> Only ~17 hours of real-time collection. See the <a href="headways.html">headway page</a> for full caveats.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <dl class="footer-sources">
+          <dt>Ridership data</dt>
+          <dd>Chicago Data Portal SODA API &middot; Through Nov 30, 2025</dd>
+          <dt>Real-time positions</dt>
+          <dd>CTA Bus Tracker API &middot; <a href="headways.html">See headway analysis</a></dd>
+          <dt>Schedules</dt>
+          <dd>CTA GTFS static feed</dd>
+        </dl>
+      </div>
+      <div style="text-align:right;">
+        <p style="margin-bottom:8px"><a href="index.html">&larr; Back to main analysis</a></p>
+        <p style="margin-bottom:8px"><a href="https://github.com/steffanybahamon/bus-check">Source code &amp; notebooks</a></p>
+        <p>Last updated February 2026</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

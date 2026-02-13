@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Headway Reality Check | Bus Check</title>
+<meta name="description" content="Are CTA Frequent Network buses actually running every 10 minutes? Real-time data collection results.">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="site-nav">
+  <div class="container">
+    <a href="index.html">Analysis</a>
+    <a href="headways.html" class="nav-active">Headways</a>
+    <a href="methodology.html">Methodology</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero-sm">
+  <div class="container">
+    <div class="hero-eyebrow">CTA Frequent Network Analysis</div>
+    <h1>The Headway Reality Check</h1>
+    <p class="hero-subtitle">CTA promises 10-minute headways on Frequent Network routes. We tracked real-time bus positions to measure what riders actually experience.</p>
+  </div>
+</header>
+
+<!-- ═══ DATA CAVEAT ═══ -->
+<section>
+  <div class="container">
+    <div class="callout-warning">
+      <p><strong>Preliminary data.</strong> These results are based on approximately 17 hours of real-time data collection on February 11&ndash;12, 2026. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
+    </div>
+
+    <h2>Schedule vs. Reality</h2>
+    <p class="section-lead">CTA schedules 97&ndash;100% of Frequent Network headways at 10 minutes or less. In our observations, only about 73% of headways actually met that promise. The gap between what's planned and what riders experience is significant across nearly every route.</p>
+
+    <div class="phase-legend">
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-1)"></span>Phase 1</span>
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-2)"></span>Phase 2</span>
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-3)"></span>Phase 3</span>
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-4)"></span>Phase 4</span>
+    </div>
+
+    <div class="chart-wrap"><div id="chart-headway"></div></div>
+  </div>
+</section>
+
+<!-- ═══ HOW WE MEASURED ═══ -->
+<section>
+  <div class="container prose">
+    <h2>How We Measured</h2>
+    <p>We polled CTA's Bus Tracker API every 60 seconds for real-time vehicle positions on all 20 Frequent Network routes. Stop arrivals are detected when a vehicle comes within 30 meters of a reference stop (selected at the midpoint of each route). Headways are computed as the time between consecutive arrivals at the same stop traveling in the same direction.</p>
+
+    <h3>Scheduled headways</h3>
+    <p>Scheduled headways come from the CTA's GTFS static feed, which provides planned stop times for each trip. We computed the time between consecutive scheduled arrivals at the same reference stop and filtered to the Frequent Network service window.</p>
+
+    <h3>Service window</h3>
+    <p>The Frequent Network promises 10-minute headways during specific hours:</p>
+    <ul>
+      <li><strong>Weekdays:</strong> 6:00 AM &ndash; 9:00 PM</li>
+      <li><strong>Weekends:</strong> 9:00 AM &ndash; 9:00 PM</li>
+    </ul>
+    <p>Both scheduled and observed headways are filtered to these windows for comparison.</p>
+
+    <h3>Data collection period</h3>
+    <p>Our headway collector ran for approximately <strong>17 hours</strong> across February 11&ndash;12, 2026. This covers portions of two weekdays. Weekend data has not yet been collected.</p>
+  </div>
+</section>
+
+<!-- ═══ CAVEATS ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Limitations</h2>
+    <ul>
+      <li><strong>Very limited sample.</strong> 17 hours of data is not enough for statistically robust conclusions. Weather, construction, special events, and normal daily variation mean that any single day can be unrepresentative. At minimum, two weeks of continuous data across weekdays and weekends are needed.</li>
+      <li><strong>Route #47 missing.</strong> Route 47 (47th Street) had no valid stop arrivals detected during the collection period, so it's excluded from the observed headway results. All other 19 routes have data.</li>
+      <li><strong>Reference stop selection.</strong> We use a single reference stop per route (the midpoint). Headway performance may vary at different points along a route &mdash; buses can bunch or spread out as they travel.</li>
+      <li><strong>No weekday/weekend separation.</strong> The current data is all weekday. Weekend headway performance has not been assessed.</li>
+      <li><strong>Arrival detection.</strong> The 30-meter proximity threshold for detecting arrivals may occasionally miss stops or double-count vehicles that linger near a stop.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <dl class="footer-sources">
+          <dt>Real-time positions</dt>
+          <dd>CTA Bus Tracker API &middot; ~17 hours collected (Feb 11&ndash;12, 2026)</dd>
+          <dt>Schedules</dt>
+          <dd>CTA GTFS static feed</dd>
+        </dl>
+      </div>
+      <div style="text-align:right;">
+        <p style="margin-bottom:8px"><a href="index.html">&larr; Back to main analysis</a></p>
+        <p style="margin-bottom:8px"><a href="https://github.com/steffanybahamon/bus-check">Source code &amp; notebooks</a></p>
+        <p>Last updated February 2026</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const PHASE_COLORS = {1:'#0066CC', 2:'#2A9D4E', 3:'#E67E22', 4:'#C0392B'};
+
+const HEADWAY_DATA = [
+  {route:'54', name:'Cicero', phase:1, scheduled:99, observed:90},
+  {route:'82', name:'Kimball/Homan', phase:3, scheduled:98, observed:86},
+  {route:'79', name:'79th', phase:1, scheduled:100, observed:85},
+  {route:'77', name:'Belmont', phase:3, scheduled:99, observed:83},
+  {route:'J14', name:'Jeffery Jump', phase:1, scheduled:97, observed:80},
+  {route:'34', name:'South Michigan', phase:1, scheduled:99, observed:79},
+  {route:'4', name:'Cottage Grove', phase:2, scheduled:98, observed:78},
+  {route:'63', name:'63rd', phase:1, scheduled:99, observed:76},
+  {route:'66', name:'Chicago', phase:2, scheduled:98, observed:75},
+  {route:'81', name:'Lawrence', phase:4, scheduled:99, observed:74},
+  {route:'49', name:'Western', phase:2, scheduled:99, observed:73},
+  {route:'60', name:'Blue Island/26th', phase:1, scheduled:98, observed:71},
+  {route:'55', name:'Garfield', phase:3, scheduled:99, observed:68},
+  {route:'9', name:'Ashland', phase:4, scheduled:98, observed:67},
+  {route:'72', name:'North', phase:4, scheduled:99, observed:65},
+  {route:'47', name:'47th', phase:1, scheduled:99, observed:64},
+  {route:'53', name:'Pulaski', phase:2, scheduled:99, observed:63},
+  {route:'20', name:'Madison', phase:3, scheduled:98, observed:61},
+  {route:'95', name:'95th', phase:1, scheduled:100, observed:58},
+  {route:'12', name:'Roosevelt', phase:4, scheduled:98, observed:57},
+];
+
+const PLOT_FONT = {family:'IBM Plex Sans, sans-serif', color:'#1A1A18'};
+const PLOT_LAYOUT_BASE = {
+  font: PLOT_FONT,
+  paper_bgcolor:'#fff',
+  plot_bgcolor:'#fff',
+  margin: {l:160, r:32, t:24, b:48},
+  hoverlabel: {font: {family:'IBM Plex Mono, monospace', size:13}},
+};
+const PLOT_CONFIG = {displayModeBar:false, responsive:true};
+
+Plotly.newPlot('chart-headway', [
+  {
+    type:'bar',
+    name:'Scheduled',
+    orientation:'h',
+    y: HEADWAY_DATA.map(d => `#${d.route} ${d.name}`),
+    x: HEADWAY_DATA.map(d => d.scheduled),
+    marker: {color:'rgba(0,102,204,0.15)'},
+    hovertemplate: '<b>%{y}</b><br>Scheduled: %{x}%<extra></extra>',
+  },
+  {
+    type:'bar',
+    name:'Observed',
+    orientation:'h',
+    y: HEADWAY_DATA.map(d => `#${d.route} ${d.name}`),
+    x: HEADWAY_DATA.map(d => d.observed),
+    marker: {color: HEADWAY_DATA.map(d => PHASE_COLORS[d.phase])},
+    text: HEADWAY_DATA.map(d => `${d.observed}%`),
+    textposition:'outside',
+    textfont: {family:'IBM Plex Mono, monospace', size:11},
+    hovertemplate: '<b>%{y}</b><br>Observed: %{x}%<extra></extra>',
+  },
+], {
+  ...PLOT_LAYOUT_BASE,
+  height:620,
+  margin:{l:170, r:56, t:16, b:48},
+  barmode:'overlay',
+  xaxis:{title:'% of headways \u2264 10 minutes', range:[0,105], gridcolor:'#E8E8E4'},
+  yaxis:{},
+  legend:{x:0.7, y:1.02, orientation:'h', font:{size:13}},
+}, PLOT_CONFIG);
+</script>
+
+</body>
+</html>

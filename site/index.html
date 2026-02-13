@@ -6,6 +6,8 @@
 <title>Bus Check: Is CTA's Frequent Network Working?</title>
 <meta name="description" content="Data analysis of CTA's Frequent Network: ridership impact and headway adherence for 20 Chicago bus routes.">
 
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -13,287 +15,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-<style>
-  :root {
-    --phase-1: #0066CC;
-    --phase-2: #2A9D4E;
-    --phase-3: #E67E22;
-    --phase-4: #C0392B;
-    --bg: #FAFAF8;
-    --bg-alt: #F0EFEB;
-    --ink: #1A1A18;
-    --ink-light: #5C5C58;
-    --ink-faint: #9C9C96;
-    --accent: #0066CC;
-    --rule: #D4D4CE;
-    --positive: #2A9D4E;
-    --negative: #C0392B;
-    --max-w: 960px;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    line-height: 1.65;
-    font-size: 17px;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .container {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 0 24px;
-  }
-
-  /* ── Hero ── */
-  .hero {
-    padding: 80px 0 40px;
-    border-bottom: 3px solid var(--ink);
-  }
-  .hero-eyebrow {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    margin-bottom: 16px;
-  }
-  .hero h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(36px, 6vw, 64px);
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    margin-bottom: 20px;
-    max-width: 14em;
-  }
-  .hero-subtitle {
-    font-size: 20px;
-    line-height: 1.5;
-    color: var(--ink-light);
-    max-width: 38em;
-  }
-
-  /* ── Sections ── */
-  section {
-    padding: 64px 0;
-    border-bottom: 1px solid var(--rule);
-  }
-  section:last-of-type { border-bottom: none; }
-
-  h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 32px;
-    letter-spacing: -0.01em;
-    margin-bottom: 8px;
-  }
-  .section-lead {
-    color: var(--ink-light);
-    font-size: 18px;
-    line-height: 1.55;
-    margin-bottom: 32px;
-    max-width: 38em;
-  }
-
-  /* ── Key Finding Callout ── */
-  .callout {
-    background: var(--ink);
-    color: #fff;
-    padding: 48px;
-    margin: 0 -24px;
-    position: relative;
-  }
-  .callout::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--phase-1) 25%, var(--phase-2) 25%, var(--phase-2) 50%, var(--phase-3) 50%, var(--phase-3) 75%, var(--phase-4) 75%);
-  }
-  .callout-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 16px;
-  }
-  .callout h2 {
-    color: #fff;
-    font-size: clamp(28px, 4vw, 44px);
-    line-height: 1.15;
-    margin-bottom: 24px;
-  }
-  .callout p { color: rgba(255,255,255,0.75); max-width: 38em; }
-
-  /* ── Phase pills ── */
-  .phase-legend {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin: 16px 0 24px;
-  }
-  .phase-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ink-light);
-  }
-  .phase-dot {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-
-  /* ── Map ── */
-  #map {
-    height: 520px;
-    border-radius: 4px;
-    border: 1px solid var(--rule);
-    z-index: 1;
-  }
-  .leaflet-popup-content-wrapper {
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 14px;
-    border-radius: 4px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  }
-  .popup-route { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
-  .popup-phase { color: var(--ink-faint); font-size: 12px; }
-  .popup-stat { margin-top: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
-  .popup-stat .positive { color: var(--positive); font-weight: 600; }
-  .popup-stat .negative { color: var(--negative); font-weight: 600; }
-
-  /* ── Chart containers ── */
-  .chart-wrap {
-    margin: 0 -24px;
-    background: #fff;
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .chart-wrap .js-plotly-plot { width: 100% !important; }
-
-  /* ── DiD results table ── */
-  .did-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 15px;
-    margin-bottom: 32px;
-  }
-  .did-table th {
-    text-align: left;
-    font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-faint);
-    padding: 12px 16px;
-    border-bottom: 2px solid var(--ink);
-  }
-  .did-table td {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--rule);
-    vertical-align: middle;
-  }
-  .did-table tr:last-child td { border-bottom: none; }
-  .did-phase-dot {
-    display: inline-block;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    margin-right: 8px;
-  }
-  .did-estimate {
-    font-family: 'IBM Plex Mono', monospace;
-    font-weight: 500;
-    font-size: 15px;
-  }
-  .did-ci {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    color: var(--ink-faint);
-  }
-
-  /* ── Methodology accordion ── */
-  details {
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    margin-bottom: 12px;
-  }
-  details summary {
-    padding: 16px 20px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 15px;
-    list-style: none;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    user-select: none;
-  }
-  details summary::before {
-    content: '+';
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 18px;
-    color: var(--ink-faint);
-    width: 20px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  details[open] summary::before { content: '\2212'; }
-  details summary::-webkit-details-marker { display: none; }
-  .method-content {
-    padding: 0 20px 20px 50px;
-    color: var(--ink-light);
-    font-size: 15px;
-    line-height: 1.7;
-  }
-  .method-content p { margin-bottom: 12px; }
-
-  /* ── Footer ── */
-  footer {
-    padding: 48px 0;
-    border-top: 2px solid var(--ink);
-    color: var(--ink-faint);
-    font-size: 14px;
-  }
-  footer a { color: var(--ink-light); }
-  .footer-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 40px;
-  }
-  .footer-sources dt {
-    font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-light);
-    margin-top: 12px;
-  }
-  .footer-sources dd { margin-left: 0; }
-
-  @media (max-width: 640px) {
-    .container { padding: 0 16px; }
-    .hero { padding: 48px 0 32px; }
-    section { padding: 40px 0; }
-    .callout { padding: 32px 16px; margin: 0 -16px; }
-    #map { height: 360px; }
-    .chart-wrap { margin: 0 -16px; }
-    .footer-grid { grid-template-columns: 1fr; }
-    .did-table { font-size: 13px; }
-    .did-table th, .did-table td { padding: 10px 8px; }
-  }
-</style>
 </head>
 <body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="site-nav">
+  <div class="container">
+    <a href="index.html" class="nav-active">Analysis</a>
+    <a href="headways.html">Headways</a>
+    <a href="methodology.html">Methodology</a>
+  </div>
+</nav>
 
 <!-- ═══ HERO ═══ -->
 <header class="hero">
@@ -309,7 +41,7 @@
   <div class="container">
     <div class="callout-label">Key Finding</div>
     <h2>Ridership is up +4.5% to +6.5% on every phase with data</h2>
-    <p>A naive analysis suggests the Frequent Network hurt ridership (&minus;4.6%). But that's a statistical artifact of pooling four rollout phases together. When we analyze each phase separately, all three with sufficient post-launch data show significant ridership gains.</p>
+    <p>Using phase-level difference-in-differences with bootstrap confidence intervals, we compared Frequent Network routes against similar non-FN routes. When each rollout phase is analyzed separately, all three with sufficient post-launch data show statistically significant ridership gains. These results are corroborated by a Callaway-Sant&rsquo;Anna staggered estimator and regression with fixed effects.</p>
   </div>
 </div>
 
@@ -332,7 +64,7 @@
 <section>
   <div class="container">
     <h2>Ridership Impact by Phase</h2>
-    <p class="section-lead">Difference-in-differences estimates comparing Frequent Network routes to similar non-FN routes. Each phase is analyzed separately with its own control group.</p>
+    <p class="section-lead">Phase-level difference-in-differences estimates with cluster-bootstrap confidence intervals, comparing Frequent Network routes to similar non-FN routes. Each phase is analyzed separately with its own control group. <a href="methodology.html" style="color:var(--accent)">Why this approach?</a></p>
 
     <table class="did-table">
       <thead>
@@ -379,6 +111,11 @@
   <div class="container">
     <h2>Year-Over-Year Ridership Change</h2>
     <p class="section-lead">Comparing matched calendar periods before and after each phase launched. 13 of 16 Phase 1&ndash;3 routes gained riders. J14 Jeffery Jump leads at +26.1%.</p>
+    <div class="phase-legend">
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-1)"></span>Phase 1</span>
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-2)"></span>Phase 2</span>
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-3)"></span>Phase 3</span>
+    </div>
     <div class="chart-wrap"><div id="chart-yoy"></div></div>
   </div>
 </section>
@@ -387,57 +124,26 @@
 <section>
   <div class="container">
     <h2>Growing Share of Total Ridership</h2>
-    <p class="section-lead">Frequent Network routes are capturing a larger share of CTA's total bus ridership after each phase launch&mdash;evidence that riders are shifting toward frequent service.</p>
+    <p class="section-lead">Frequent Network routes are capturing a growing share of CTA's total bus ridership after each phase launch. Importantly, total CTA bus ridership also grew during this period&mdash;the rising FN share reflects genuine ridership growth on frequent routes, not just riders switching from other buses.</p>
     <div class="chart-wrap"><div id="chart-share"></div></div>
   </div>
 </section>
 
-<!-- ═══ HEADWAY ADHERENCE ═══ -->
+<!-- ═══ HEADWAY TEASER ═══ -->
 <section>
   <div class="container">
-    <h2>The Headway Reality Check</h2>
-    <p class="section-lead">CTA schedules 97&ndash;100% of headways at 10 minutes or less on paper. On the street, only 73% of observed headways actually meet that promise. Based on ~41 hours of real-time data collection.</p>
-    <div class="chart-wrap"><div id="chart-headway"></div></div>
+    <h2>Are Buses Actually Running Every 10 Minutes?</h2>
+    <p class="section-lead">We also tracked real-time bus positions using CTA's Bus Tracker API to measure whether routes actually achieve the promised 10-minute headways. Early results suggest a gap between schedule and reality.</p>
+    <a href="headways.html" class="page-link">See the headway analysis &rarr;</a>
   </div>
 </section>
 
-<!-- ═══ METHODOLOGY ═══ -->
+<!-- ═══ METHODOLOGY TEASER ═══ -->
 <section>
   <div class="container">
     <h2>Methodology</h2>
-    <p class="section-lead">How we measured ridership impact and headway adherence.</p>
-
-    <details>
-      <summary>Difference-in-Differences (DiD)</summary>
-      <div class="method-content">
-        <p>DiD compares the change in ridership for treated routes (Frequent Network) against the change for untreated control routes over the same period. If both groups would have followed the same trend absent treatment, the difference in their changes estimates the causal effect of the Frequent Network.</p>
-        <p>Control routes are selected from non-FN routes based on pre-treatment ridership similarity. For each phase, already-treated routes from earlier phases are excluded from the control pool.</p>
-        <p>Confidence intervals are computed via cluster bootstrap (1,000 iterations, resampled at the route level) to account for within-route correlation.</p>
-      </div>
-    </details>
-    <details>
-      <summary>Why the pooled estimate is misleading</summary>
-      <div class="method-content">
-        <p>The four rollout phases span March to December 2025, and ridership data ends November 30. Phase 4 routes have zero post-launch observations, Phase 3 has only two months, while Phase 1 has eight. Pooling them creates a weighted average dominated by Phase 4's missing data and Phase 3's thin signal.</p>
-        <p>Standard two-way fixed-effects DiD is also biased under staggered treatment: already-treated units serve as implicit controls for later-treated units, contaminating the estimate. Callaway-Sant'Anna (2021) staggered DiD and phase-level analysis both confirm positive effects.</p>
-      </div>
-    </details>
-    <details>
-      <summary>Headway measurement</summary>
-      <div class="method-content">
-        <p>We poll CTA's Bus Tracker API every 60 seconds for real-time vehicle positions on all 20 routes. Stop arrivals are detected when a vehicle comes within 30 meters of a reference stop. Headways are computed as the time between consecutive arrivals at the same stop in the same direction.</p>
-        <p>Scheduled headways come from the GTFS static feed. The comparison filters to the Frequent Network service window: 6 AM&ndash;9 PM weekdays, 9 AM&ndash;9 PM weekends.</p>
-        <p><strong>Caveat:</strong> Current observed headway data covers approximately 41 hours. Two or more weeks of collection are needed for robust conclusions.</p>
-      </div>
-    </details>
-    <details>
-      <summary>Data sources</summary>
-      <div class="method-content">
-        <p><strong>Ridership:</strong> Chicago Data Portal SODA API (dataset <code>jyb9-n7fm</code>). Daily boardings by route. Public, no authentication needed. Data through November 30, 2025.</p>
-        <p><strong>Real-time positions:</strong> CTA Bus Tracker API (<code>getvehicles</code> endpoint). Polled every 60 seconds for all 20 FN routes.</p>
-        <p><strong>Schedules:</strong> CTA GTFS static feed. Provides planned stop times, headways, and route geometry.</p>
-      </div>
-    </details>
+    <p class="section-lead">This analysis uses difference-in-differences to estimate the causal impact of the Frequent Network on ridership, with phase-level estimation to avoid bias from staggered treatment timing. We ran eight separate analyses to stress-test the findings from different angles&mdash;pooled, phase-level, staggered (Callaway-Sant'Anna), and regression with fixed effects.</p>
+    <a href="methodology.html" class="page-link">Read the full methodology &rarr;</a>
   </div>
 </section>
 
@@ -450,13 +156,14 @@
           <dt>Ridership data</dt>
           <dd>Chicago Data Portal SODA API &middot; Through Nov 30, 2025</dd>
           <dt>Real-time positions</dt>
-          <dd>CTA Bus Tracker API &middot; ~41 hours collected</dd>
+          <dd>CTA Bus Tracker API &middot; <a href="headways.html">See headway analysis</a></dd>
           <dt>Schedules</dt>
           <dd>CTA GTFS static feed</dd>
         </dl>
       </div>
       <div style="text-align:right;">
         <p style="margin-bottom:8px"><a href="https://github.com/steffanybahamon/bus-check">Source code &amp; notebooks</a></p>
+        <p style="margin-bottom:8px"><a href="methodology.html">Methodology</a></p>
         <p>Last updated February 2026</p>
       </div>
     </div>
@@ -497,29 +204,6 @@ const SHARE_DATA = {
   months: ['2024-01','2024-02','2024-03','2024-04','2024-05','2024-06','2024-07','2024-08','2024-09','2024-10','2024-11','2024-12','2025-01','2025-02','2025-03','2025-04','2025-05','2025-06','2025-07','2025-08','2025-09','2025-10','2025-11'],
   share: [36.8,36.9,37.1,37.2,37.0,36.8,36.9,37.1,37.0,36.9,37.0,36.8,37.0,37.1,37.4,37.6,37.8,37.9,38.0,38.1,38.3,38.5,38.7],
 };
-
-const HEADWAY_DATA = [
-  {route:'54', name:'Cicero', scheduled:99, observed:90},
-  {route:'82', name:'Kimball/Homan', scheduled:98, observed:86},
-  {route:'79', name:'79th', scheduled:100, observed:85},
-  {route:'77', name:'Belmont', scheduled:99, observed:83},
-  {route:'J14', name:'Jeffery Jump', scheduled:97, observed:80},
-  {route:'34', name:'South Michigan', scheduled:99, observed:79},
-  {route:'4', name:'Cottage Grove', scheduled:98, observed:78},
-  {route:'63', name:'63rd', scheduled:99, observed:76},
-  {route:'66', name:'Chicago', scheduled:98, observed:75},
-  {route:'81', name:'Lawrence', scheduled:99, observed:74},
-  {route:'49', name:'Western', scheduled:99, observed:73},
-  {route:'60', name:'Blue Island/26th', scheduled:98, observed:71},
-  {route:'55', name:'Garfield', scheduled:99, observed:68},
-  {route:'9', name:'Ashland', scheduled:98, observed:67},
-  {route:'72', name:'North', scheduled:99, observed:65},
-  {route:'47', name:'47th', scheduled:99, observed:64},
-  {route:'53', name:'Pulaski', scheduled:99, observed:63},
-  {route:'20', name:'Madison', scheduled:98, observed:61},
-  {route:'95', name:'95th', scheduled:100, observed:58},
-  {route:'12', name:'Roosevelt', scheduled:98, observed:57},
-];
 
 const ROUTE_YOY_MAP = {};
 YOY_DATA.forEach(d => { ROUTE_YOY_MAP[d.route] = d; });
@@ -568,10 +252,10 @@ fetch('routes.geojson')
     }).addTo(map);
   });
 
-// ── CHART: DiD by Phase ──
+// ── CHART: DiD by Phase (dot plot with CI lines) ──
 Plotly.newPlot('chart-did', [{
-  type:'bar',
-  orientation:'h',
+  type:'scatter',
+  mode:'markers',
   y: DID_DATA.map(d => d.label),
   x: DID_DATA.map(d => d.estimate),
   error_x: {
@@ -580,30 +264,36 @@ Plotly.newPlot('chart-did', [{
     array: DID_DATA.map(d => d.ci_hi - d.estimate),
     arrayminus: DID_DATA.map(d => d.estimate - d.ci_lo),
     color:'#5C5C58',
-    thickness:1.5,
-    width:6,
+    thickness:2,
+    width:8,
   },
-  marker: {color: DID_DATA.map(d => PHASE_COLORS[d.phase])},
-  text: DID_DATA.map(d => `+${d.estimate} rides/day (+${d.pct}%)`),
-  textposition:'outside',
-  textfont: {family:'IBM Plex Mono, monospace', size:13, color:'#1A1A18'},
-  hovertemplate: '<b>%{y}</b><br>+%{x} rides/day<br>95% CI: [%{error_x.arrayminus}, +%{error_x.array}]<extra></extra>',
+  marker: {color: DID_DATA.map(d => PHASE_COLORS[d.phase]), size:14},
+  hovertemplate: '<b>%{y}</b><br>+%{x} rides/day<extra></extra>',
 }], {
   ...PLOT_LAYOUT_BASE,
-  height:220,
-  margin:{l:80, r:140, t:16, b:40},
-  xaxis:{title:'Additional rides per day', gridcolor:'#E8E8E4', zeroline:true, zerolinecolor:'#D4D4CE'},
+  height:260,
+  margin:{l:90, r:40, t:40, b:48},
+  xaxis:{title:'Additional rides per day', gridcolor:'#E8E8E4', zeroline:true, zerolinecolor:'#D4D4CE', range:[-100, 1400]},
   yaxis:{autorange:'reversed'},
+  annotations: DID_DATA.map(d => ({
+    x: d.estimate,
+    y: d.label,
+    text: `<b>+${d.estimate}</b> rides/day (+${d.pct}%)`,
+    showarrow:false,
+    font:{family:'IBM Plex Mono, monospace', size:13, color:'#1A1A18'},
+    yshift: 22,
+  })),
 }, PLOT_CONFIG);
 
 // ── CHART: YoY by Route ──
+// Sort by YoY value; always use phase color (even for negative bars)
 const yoySorted = [...YOY_DATA].sort((a,b) => a.yoy - b.yoy);
 Plotly.newPlot('chart-yoy', [{
   type:'bar',
   orientation:'h',
   y: yoySorted.map(d => `#${d.route} ${d.name}`),
   x: yoySorted.map(d => d.yoy),
-  marker: {color: yoySorted.map(d => d.yoy >= 0 ? PHASE_COLORS[d.phase] : '#C0392B')},
+  marker: {color: yoySorted.map(d => PHASE_COLORS[d.phase])},
   text: yoySorted.map(d => `${d.yoy > 0 ? '+' : ''}${d.yoy}%`),
   textposition:'outside',
   textfont: {family:'IBM Plex Mono, monospace', size:12, color:'#1A1A18'},
@@ -617,13 +307,12 @@ Plotly.newPlot('chart-yoy', [{
 }, PLOT_CONFIG);
 
 // ── CHART: Ridership Share ──
-const p1_launch = '2025-03';
 Plotly.newPlot('chart-share', [{
   type:'scatter',
   mode:'lines',
   x: SHARE_DATA.months,
   y: SHARE_DATA.share,
-  line: {color:'var(--accent)', width:2.5},
+  line: {color:'#0066CC', width:2.5},
   fill:'tozeroy',
   fillcolor:'rgba(0,102,204,0.06)',
   hovertemplate: '%{x}<br>FN share: %{y:.1f}%<extra></extra>',
@@ -634,44 +323,15 @@ Plotly.newPlot('chart-share', [{
   xaxis:{title:'', gridcolor:'#E8E8E4'},
   yaxis:{title:'FN share of total ridership (%)', range:[35, 40], gridcolor:'#E8E8E4'},
   shapes: [
-    {type:'line', x0:p1_launch, x1:p1_launch, y0:0, y1:1, yref:'paper', line:{color:'#1A1A18', width:1, dash:'dot'}},
+    {type:'line', x0:'2025-03', x1:'2025-03', y0:0, y1:1, yref:'paper', line:{color:PHASE_COLORS[1], width:1.5, dash:'dot'}},
+    {type:'line', x0:'2025-06', x1:'2025-06', y0:0, y1:1, yref:'paper', line:{color:PHASE_COLORS[2], width:1.5, dash:'dot'}},
+    {type:'line', x0:'2025-09', x1:'2025-09', y0:0, y1:1, yref:'paper', line:{color:PHASE_COLORS[3], width:1.5, dash:'dot'}},
   ],
   annotations: [
-    {x:p1_launch, y:40, yref:'y', text:'Phase 1<br>launch', showarrow:false, font:{size:11, color:'#5C5C58'}, xanchor:'right', xshift:-6},
+    {x:'2025-03', y:39.8, yref:'y', text:'Phase 1', showarrow:false, font:{size:11, color:PHASE_COLORS[1], weight:600}, xanchor:'right', xshift:-6},
+    {x:'2025-06', y:39.8, yref:'y', text:'Phase 2', showarrow:false, font:{size:11, color:PHASE_COLORS[2], weight:600}, xanchor:'right', xshift:-6},
+    {x:'2025-09', y:39.8, yref:'y', text:'Phase 3', showarrow:false, font:{size:11, color:PHASE_COLORS[3], weight:600}, xanchor:'right', xshift:-6},
   ],
-}, PLOT_CONFIG);
-
-// ── CHART: Headway Adherence ──
-Plotly.newPlot('chart-headway', [
-  {
-    type:'bar',
-    name:'Scheduled',
-    orientation:'h',
-    y: HEADWAY_DATA.map(d => `#${d.route} ${d.name}`),
-    x: HEADWAY_DATA.map(d => d.scheduled),
-    marker: {color:'rgba(0,102,204,0.15)'},
-    hovertemplate: '<b>%{y}</b><br>Scheduled: %{x}%<extra></extra>',
-  },
-  {
-    type:'bar',
-    name:'Observed',
-    orientation:'h',
-    y: HEADWAY_DATA.map(d => `#${d.route} ${d.name}`),
-    x: HEADWAY_DATA.map(d => d.observed),
-    marker: {color: HEADWAY_DATA.map(d => d.observed >= 75 ? '#2A9D4E' : d.observed >= 65 ? '#E67E22' : '#C0392B')},
-    text: HEADWAY_DATA.map(d => `${d.observed}%`),
-    textposition:'outside',
-    textfont: {family:'IBM Plex Mono, monospace', size:11},
-    hovertemplate: '<b>%{y}</b><br>Observed: %{x}%<extra></extra>',
-  },
-], {
-  ...PLOT_LAYOUT_BASE,
-  height:620,
-  margin:{l:170, r:56, t:16, b:48},
-  barmode:'overlay',
-  xaxis:{title:'% of headways ≤ 10 minutes', range:[0,105], gridcolor:'#E8E8E4'},
-  yaxis:{},
-  legend:{x:0.7, y:1.02, orientation:'h', font:{size:13}},
 }, PLOT_CONFIG);
 </script>
 
