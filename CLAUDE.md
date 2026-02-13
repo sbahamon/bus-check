@@ -29,6 +29,7 @@ Analyzes CTA Frequent Network bus routes to determine:
 - `src/bus_check/collector/` — real-time Bus Tracker polling pipeline
 - `tests/` — mirrors src/ structure, test-first development
 - `notebooks/` — Jupyter notebooks for exploration and final output
+- `site/` — static website (GitHub Pages): analysis, headways, methodology, reproducibility
 
 ## Testing conventions
 - pytest with fixtures in conftest.py
@@ -45,3 +46,7 @@ Analyzes CTA Frequent Network bus routes to determine:
 - Chicago Data Portal SODA API: `https://data.cityofchicago.org/resource/jyb9-n7fm.json` (ridership by route)
 - CTA Bus Tracker API: `http://www.ctabustracker.com/bustime/api/v2/` (real-time vehicle positions)
 - CTA GTFS: `http://www.transitchicago.com/downloads/sch_data/google_transit.zip` (scheduled service)
+
+## Reproducing results
+See `REPRODUCING.md` for step-by-step instructions to verify all findings.
+Run `uv run pytest` (119 tests) and execute all 8 notebooks to confirm.

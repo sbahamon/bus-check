@@ -54,6 +54,14 @@ Then start the collector:
 ./run_collector.sh
 ```
 
+## Reproducing the Analysis
+
+Every finding on the [project website](https://steffanybahamon.github.io/bus-check/) can be independently verified by running the 8 analysis notebooks. See [`REPRODUCING.md`](REPRODUCING.md) for detailed step-by-step instructions.
+
+**Using an AI coding assistant?** `REPRODUCING.md` is written to be machine-readable — point your AI tool at it and it can walk through the entire reproduction process.
+
+**Website:** The [reproducibility page](https://steffanybahamon.github.io/bus-check/reproducibility.html) has the same guide in a more readable format.
+
 ## Data Sources
 
 - **Ridership:** [Chicago Data Portal SODA API](https://data.cityofchicago.org/resource/jyb9-n7fm.json) (no auth needed)

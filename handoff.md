@@ -36,6 +36,7 @@ A headway collector **may still be running** — check with `ps aux | grep headw
 ```
 bus-check/
   CLAUDE.md              # Subagent context file
+  REPRODUCING.md         # AI agent reproduction guide (machine-readable)
   pyproject.toml         # uv-managed, hatchling build, src layout
   .env                   # CTA_API_KEY (exists, not committed)
   run_collector.sh       # Shell wrapper to start collector
@@ -70,6 +71,14 @@ bus-check/
     test_config.py (17), test_db.py (7), test_ridership.py (21),
     test_ridership_analysis.py (31), test_bus_tracker.py (11),
     test_gtfs.py (9), test_headway_analysis.py (19), test_headway_collector.py (6)
+
+  site/                  # Static website (GitHub Pages)
+    index.html           # Main analysis page
+    headways.html        # Headway reality check
+    methodology.html     # Full methodology writeup
+    reproducibility.html # Reproducibility guide for humans
+    style.css            # Shared styles
+    routes.geojson       # Route geometry for map
 
   data/                  # gitignored (/data/ in .gitignore)
     headway.db           # Collector writes here
@@ -106,6 +115,12 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 2. **Phase 2/3 launch dates are approximate** — config.py uses Jun 15 and Sep 15 as placeholders.
 
 3. **Headway data is preliminary** — ~17 hours collected so far. Continue running collector for weeks.
+
+## Reproducibility
+- **For humans:** `site/reproducibility.html` — step-by-step guide on the project website
+- **For AI agents:** `REPRODUCING.md` — machine-readable reproduction guide in the repo root
+- All 8 notebooks are independent (each fetches data live from public SODA API). No chaining.
+- Key gotcha: always `uv pip install -e . && uv run --no-sync jupyter ...`
 
 ## Pending work
 - [ ] Let collector run for 2+ weeks for robust headway conclusions

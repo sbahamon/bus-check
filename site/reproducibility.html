@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reproducibility | Bus Check</title>
+<meta name="description" content="How to reproduce every finding in the CTA Frequent Network analysis: setup, notebooks, and verification.">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav class="site-nav">
+  <div class="container">
+    <a href="index.html">Analysis</a>
+    <a href="headways.html">Headways</a>
+    <a href="methodology.html">Methodology</a>
+    <a href="reproducibility.html" class="nav-active">Reproducibility</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero-sm">
+  <div class="container">
+    <div class="hero-eyebrow">CTA Frequent Network Analysis</div>
+    <h1>Reproducing the Analysis</h1>
+    <p class="hero-subtitle">Clone the repo, install dependencies, and run 8 notebooks to verify every finding on this site.</p>
+  </div>
+</header>
+
+<!-- ═══ QUICK START ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Quick Start</h2>
+    <pre><code>git clone https://github.com/steffanybahamon/bus-check
+cd bus-check
+uv sync
+uv pip install -e .
+uv run --no-sync jupyter lab</code></pre>
+    <p>Requires Python 3.11+ and <a href="https://docs.astral.sh/uv/">uv</a> (Astral's package manager).</p>
+  </div>
+</section>
+
+<!-- ═══ WHAT YOU'LL NEED ═══ -->
+<section>
+  <div class="container prose">
+    <h2>What You'll Need</h2>
+    <ul>
+      <li><strong>Python 3.11+</strong> and <strong><a href="https://docs.astral.sh/uv/">uv</a></strong> (Astral's package manager)</li>
+      <li><strong>Internet access</strong> &mdash; notebooks fetch data live from Chicago's public data portal</li>
+      <li><strong>No API keys</strong> &mdash; ridership data is public. A CTA API key is only needed for the optional headway collector.</li>
+      <li><strong>~10 minutes</strong> to run all 8 notebooks (most time is API data fetching)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ THE CRITICAL GOTCHA ═══ -->
+<section>
+  <div class="container prose">
+    <h2>The Critical Gotcha</h2>
+    <div class="callout-warning">
+      <p><strong>Always pair <code>uv pip install -e .</code> with <code>uv run --no-sync</code>.</strong></p>
+      <p>Plain <code>uv run</code> (without <code>--no-sync</code>) re-syncs the virtual environment and <strong>drops the editable install</strong>. This causes <code>ModuleNotFoundError: No module named 'bus_check'</code>.</p>
+      <p>The safe pattern is always:</p>
+    </div>
+    <pre><code>uv pip install -e . && uv run --no-sync jupyter ...</code></pre>
+    <p>If you see <code>ModuleNotFoundError</code>, just run <code>uv pip install -e .</code> again.</p>
+  </div>
+</section>
+
+<!-- ═══ RUNNING THE NOTEBOOKS ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Running the Notebooks</h2>
+    <p>All 8 notebooks are independent &mdash; they each fetch data live from public APIs. No chaining required.</p>
+
+    <table class="nb-table">
+      <thead>
+        <tr><th>#</th><th>Notebook</th><th>Data Source</th><th>Key Output</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="nb-num">01</td>
+          <td><strong>Ridership Exploration</strong><br>20-route YoY comparison + pooled DiD</td>
+          <td>SODA API</td>
+          <td>YoY changes, pooled DiD estimate</td>
+        </tr>
+        <tr>
+          <td class="nb-num">02</td>
+          <td><strong>Headway Exploration</strong><br>GTFS scheduled vs. observed headways</td>
+          <td>GTFS + headway.db</td>
+          <td>Headway adherence rates</td>
+        </tr>
+        <tr>
+          <td class="nb-num">03</td>
+          <td><strong>Phases 1&ndash;3 Only</strong><br>Excludes Phase 4 (no post-data)</td>
+          <td>SODA API</td>
+          <td>Filtered YoY comparison</td>
+        </tr>
+        <tr>
+          <td class="nb-num">04</td>
+          <td><strong>Without Route #79</strong><br>Sensitivity test excluding outlier</td>
+          <td>SODA API</td>
+          <td>Robustness check</td>
+        </tr>
+        <tr>
+          <td class="nb-num">05</td>
+          <td><strong>Ridership Share</strong><br>FN share of total CTA ridership</td>
+          <td>SODA API</td>
+          <td>Share trend lines</td>
+        </tr>
+        <tr>
+          <td class="nb-num">06</td>
+          <td><strong>DiD by Phase</strong><br>Phase-level DiD with bootstrap CIs</td>
+          <td>SODA API</td>
+          <td>P1 +428, P2 +586, P3 +665</td>
+        </tr>
+        <tr>
+          <td class="nb-num">07</td>
+          <td><strong>Staggered DiD</strong><br>Callaway-Sant'Anna estimator</td>
+          <td>SODA API</td>
+          <td>ATT estimate</td>
+        </tr>
+        <tr>
+          <td class="nb-num">08</td>
+          <td><strong>Regression DiD</strong><br>OLS with fixed effects + placebo</td>
+          <td>SODA API</td>
+          <td>Regression DiD, placebo test</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Execute one notebook</h3>
+    <pre><code>uv pip install -e . && uv run --no-sync jupyter execute notebooks/01_ridership_exploration.ipynb --inplace</code></pre>
+
+    <h3>Execute all at once</h3>
+    <pre><code>for nb in notebooks/0{1..8}_*.ipynb; do
+  echo "Running $nb..."
+  uv pip install -e . && uv run --no-sync jupyter execute "$nb" --inplace
+done</code></pre>
+  </div>
+</section>
+
+<!-- ═══ VERIFYING THE RESULTS ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Verifying the Results</h2>
+    <p>Run the test suite to confirm all components work correctly:</p>
+    <pre><code>uv run pytest   # 119 tests should pass</code></pre>
+    <p>Then compare notebook outputs against the key numbers on the <a href="index.html">main page</a>:</p>
+    <ul>
+      <li><strong>Phase 1 DiD:</strong> +428 rides/day (+5.9%), 95% CI [+42, +799]</li>
+      <li><strong>Phase 2 DiD:</strong> +586 rides/day (+4.5%), 95% CI [+1, +1,271]</li>
+      <li><strong>Phase 3 DiD:</strong> +665 rides/day (+6.5%), 95% CI [+205, +998]</li>
+      <li><strong>J14 Jeffery Jump YoY:</strong> +26.1%</li>
+      <li><strong>13 of 16</strong> Phase 1&ndash;3 routes gained riders YoY</li>
+      <li><strong>Placebo test p-value:</strong> 0.925 (no pre-trends)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ DATA SOURCES ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Data Sources</h2>
+    <h3>Ridership</h3>
+    <p><a href="https://data.cityofchicago.org/Transportation/CTA-Ridership-Bus-Routes-Daily-Totals/jyb9-n7fm">Chicago Data Portal SODA API</a> (dataset <code>jyb9-n7fm</code>). Public, no authentication required. Daily boardings by route from January 2023 through November 30, 2025.</p>
+
+    <h3>Schedules (GTFS)</h3>
+    <p><a href="http://www.transitchicago.com/downloads/sch_data/google_transit.zip">CTA GTFS static feed</a>. Downloaded automatically by notebook 02 for scheduled headway computation.</p>
+
+    <h3>Bus Tracker (optional)</h3>
+    <p><a href="http://www.ctabustracker.com/bustime/api/v2/">CTA Bus Tracker API</a>. Requires a CTA API key. Only needed for the real-time headway collector, not for ridership analysis.</p>
+  </div>
+</section>
+
+<!-- ═══ HEADWAY DATA CAVEAT ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Headway Data Caveat</h2>
+    <p>The headway analysis (notebook 02) depends on real-time data collected by a background process. A fresh clone won't have this data. Your options:</p>
+    <ul>
+      <li><strong>Skip</strong> notebook 02's observed headway section (scheduled headways still work from GTFS)</li>
+      <li><strong>Run the collector yourself:</strong></li>
+    </ul>
+    <pre><code>uv run python -m bus_check.collector.headway_collector</code></pre>
+    <p>This requires a <code>CTA_API_KEY</code> in your <code>.env</code> file. See <code>.env.example</code> for the template.</p>
+  </div>
+</section>
+
+<!-- ═══ KNOWN LIMITATIONS ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Known Limitations for Reproducibility</h2>
+    <ul>
+      <li><strong>SODA data is live</strong> &mdash; results may change if Chicago updates the dataset</li>
+      <li><strong>As of February 2026,</strong> ridership data goes through November 30, 2025</li>
+      <li><strong>Phase 2/3 launch dates are approximate</strong> &mdash; <code>config.py</code> uses June 15 and September 15</li>
+      <li><strong>Headway data is not included in the repo</strong> &mdash; the collector must be run separately</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ PROJECT STRUCTURE ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Project Structure</h2>
+    <ul>
+      <li><code>src/bus_check/config.py</code> &mdash; all route/phase/date constants</li>
+      <li><code>src/bus_check/data/</code> &mdash; API clients (ridership, GTFS, Bus Tracker)</li>
+      <li><code>src/bus_check/analysis/</code> &mdash; statistical models (ridership DiD, headway metrics)</li>
+      <li><code>notebooks/</code> &mdash; the 8 analysis notebooks</li>
+      <li><code>tests/</code> &mdash; 119 tests validating all components</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ AI AGENT CALLOUT ═══ -->
+<section>
+  <div class="container">
+    <div class="callout" style="text-align:left;">
+      <div class="callout-label">For AI Coding Assistants</div>
+      <p>Using Claude Code, Cursor, Copilot, or another AI coding assistant? See <a href="https://github.com/steffanybahamon/bus-check/blob/main/REPRODUCING.md"><code>REPRODUCING.md</code></a> in the repo root for a machine-readable reproduction guide written in direct, imperative language that agents parse well.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <dl class="footer-sources">
+          <dt>Ridership data</dt>
+          <dd>Chicago Data Portal SODA API &middot; Through Nov 30, 2025</dd>
+          <dt>Real-time positions</dt>
+          <dd>CTA Bus Tracker API &middot; <a href="headways.html">See headway analysis</a></dd>
+          <dt>Schedules</dt>
+          <dd>CTA GTFS static feed</dd>
+        </dl>
+      </div>
+      <div style="text-align:right;">
+        <p style="margin-bottom:8px"><a href="index.html">&larr; Back to main analysis</a></p>
+        <p style="margin-bottom:8px"><a href="https://github.com/steffanybahamon/bus-check">Source code &amp; notebooks</a></p>
+        <p>Last updated February 2026</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
