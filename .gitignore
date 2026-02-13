@@ -9,3 +9,5 @@ dist/
 build/
 .ipynb_checkpoints/
 .ruff_cache/
+_build/
+.claude/

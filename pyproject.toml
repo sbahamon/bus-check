@@ -23,6 +23,7 @@ dev = [
     "pytest>=7.0",
     "responses>=0.25",
     "ruff>=0.1",
+    "jupyter-book>=1.0",
 ]
 
 [build-system]
