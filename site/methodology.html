@@ -62,15 +62,15 @@
         </tr>
         <tr>
           <td><span class="did-phase-dot" style="background:var(--phase-2)"></span>Phase 2</td>
-          <td>Summer 2025</td>
-          <td>4, 49, 53, 66</td>
+          <td>June 15, 2025</td>
+          <td>4, 20, 49, 66</td>
           <td>~5 months</td>
         </tr>
         <tr>
           <td><span class="did-phase-dot" style="background:var(--phase-3)"></span>Phase 3</td>
-          <td>Fall 2025</td>
-          <td>20, 55, 77, 82</td>
-          <td>~2 months</td>
+          <td>August 17, 2025</td>
+          <td>53, 55, 77, 82</td>
+          <td>~3.5 months</td>
         </tr>
         <tr>
           <td><span class="did-phase-dot" style="background:var(--phase-4)"></span>Phase 4</td>
@@ -81,7 +81,7 @@
       </tbody>
     </table>
 
-    <p>Phase 2 and Phase 3 launch dates are approximate &mdash; CTA announced them as "Summer" and "Fall" 2025, respectively. We use June 15 and September 15 as working dates.</p>
+    <p>Phase 2 launched June 15, 2025, and Phase 3 launched August 17, 2025, per CTA press releases.</p>
   </div>
 </section>
 
@@ -150,7 +150,7 @@
         <tr>
           <td class="nb-num">02</td>
           <td><strong>Headway Exploration</strong><br>Scheduled vs. observed headways</td>
-          <td>Schedule: 99.8% &le; 10 min. Observed: ~73%. <a href="headways.html">Details &rarr;</a></td>
+          <td>Schedule: 99.8% &le; 10 min. Observed: ~59%. <a href="headways.html">Details &rarr;</a></td>
         </tr>
         <tr>
           <td class="nb-num">03</td>
@@ -170,7 +170,7 @@
         <tr>
           <td class="nb-num">06</td>
           <td><strong>DiD by Phase</strong><br>Phase-level DiD with bootstrap CIs</td>
-          <td>P1: +428/day (+5.9%), P2: +586 (+4.5%), P3: +665 (+6.5%) &mdash; all positive</td>
+          <td>P1: +428/day (+5.9%), P2: +514 (+4.2%), P3: +1,142 (+10.4%) &mdash; all positive</td>
         </tr>
         <tr>
           <td class="nb-num">07</td>
@@ -180,7 +180,7 @@
         <tr>
           <td class="nb-num">08</td>
           <td><strong>Regression DiD</strong><br>OLS with route + time fixed effects</td>
-          <td>+136 rides/day (p=0.07); placebo test passes (p=0.93)</td>
+          <td>+236 rides/day (p=0.002); placebo test passes (p=0.93)</td>
         </tr>
       </tbody>
     </table>
@@ -204,7 +204,7 @@
       <summary>02 &mdash; Headway Exploration</summary>
       <div class="method-content">
         <p>Assesses whether Frequent Network routes actually achieve the promised 10-minute headways. Compares scheduled headways from GTFS against observed headways from CTA Bus Tracker API data.</p>
-        <p>On paper, all 20 routes schedule 97&ndash;100% of headways at 10 minutes or less. In practice, only about 73% of observed headways meet the promise. See the <a href="headways.html">headway analysis page</a> for full results and caveats about the limited data collection window.</p>
+        <p>On paper, all 20 routes schedule 97&ndash;100% of headways at 10 minutes or less. In practice, only about 59% of observed headways meet the promise (filtered to the service window). See the <a href="headways.html">headway analysis page</a> for full results and caveats about the limited data collection window.</p>
       </div>
     </details>
 
@@ -240,8 +240,8 @@
         <p>Results: <strong>All three phases show positive and statistically significant ridership gains.</strong></p>
         <ul>
           <li>Phase 1 (8 routes, ~8 months post): +428 rides/day (+5.9%), 95% CI [+42, +799]</li>
-          <li>Phase 2 (4 routes, ~5 months post): +586 rides/day (+4.5%), 95% CI [+1, +1,271]</li>
-          <li>Phase 3 (4 routes, ~2 months post): +665 rides/day (+6.5%), 95% CI [+205, +998]</li>
+          <li>Phase 2 (4 routes, ~5 months post): +514 rides/day (+4.2%), 95% CI [+163, +832]</li>
+          <li>Phase 3 (4 routes, ~3.5 months post): +1,142 rides/day (+10.4%), 95% CI [+213, +2,492]</li>
         </ul>
         <p>Confidence intervals are computed via cluster bootstrap (1,000 iterations at the route level).</p>
       </div>
@@ -260,7 +260,7 @@
       <summary>08 &mdash; Regression DiD with Fixed Effects</summary>
       <div class="method-content">
         <p>A standard regression approach: OLS with route and time (year-month) fixed effects, plus a treatment indicator. Provides traditional standard errors and p-values.</p>
-        <p>The basic specification estimates +136 rides/day with homoskedastic standard errors (p=0.07, marginally significant). With cluster-robust standard errors at the route level, p=0.39 &mdash; not significant, reflecting the reality that 31 routes provide limited statistical power.</p>
+        <p>The basic specification estimates +236 rides/day with homoskedastic standard errors (p=0.002, significant). With cluster-robust standard errors at the route level, p=0.22 &mdash; not significant at 5%, reflecting the reality that 31 routes provide limited statistical power.</p>
         <p>Critically, a <strong>placebo test</strong> (applying fake treatment one year earlier) produces a near-zero estimate of -17 rides/day with p=0.925. This confirms there were no pre-existing differential trends between treated and control routes &mdash; a key assumption of DiD.</p>
       </div>
     </details>
@@ -280,11 +280,11 @@
     <p>A simple &ldquo;compare treated vs. control before and after&rdquo; is easier for a general audience to grasp than Callaway-Sant&rsquo;Anna group-time average treatment effects or regression coefficients with clustered standard errors.</p>
 
     <h3>Per-phase granularity</h3>
-    <p>The front page shows Phase 1 at +428, Phase 2 at +586, Phase 3 at +665 rides per day. A single aggregate ATT (+429 from notebook 07) loses this detail and obscures the fact that later phases show larger effects, possibly because the Frequent Network brand was better established.</p>
+    <p>The front page shows Phase 1 at +428, Phase 2 at +514, Phase 3 at +1,142 rides per day. A single aggregate ATT (+429 from notebook 07) loses this detail and obscures the fact that later phases show larger effects, possibly because the Frequent Network brand was better established.</p>
 
     <h3>What the other methods add</h3>
     <p><strong>Callaway-Sant&rsquo;Anna (notebook 07)</strong> produces an overall ATT of +429 rides/day that is statistically significant. It is the most econometrically rigorous approach for staggered treatment settings and independently confirms the phase-level findings. Its main value is as a robustness check.</p>
-    <p><strong>OLS regression (notebook 08)</strong> estimates +136 rides/day with homoskedastic standard errors (p=0.07, marginally significant), but cluster-robust standard errors yield p=0.39 &mdash; not significant at conventional levels with only 31 routes. The most valuable output is the <strong>placebo test</strong>: applying fake treatment one year earlier produces a near-zero estimate (p=0.93), confirming there were no pre-existing differential trends between treated and control routes.</p>
+    <p><strong>OLS regression (notebook 08)</strong> estimates +236 rides/day with homoskedastic standard errors (p=0.002, significant), but cluster-robust standard errors yield p=0.22 &mdash; not significant at the 5% level with only 31 routes. The most valuable output is the <strong>placebo test</strong>: applying fake treatment one year earlier produces a near-zero estimate (p=0.93), confirming there were no pre-existing differential trends between treated and control routes.</p>
     <p>In short: all three methods point in the same direction. Phase-level DiD shows it most clearly. This page exists so readers who want the full statistical picture can evaluate all eight analyses.</p>
   </div>
 </section>
@@ -294,8 +294,8 @@
   <div class="container prose">
     <h2>Limitations</h2>
     <ul>
-      <li><strong>Data ends November 30, 2025.</strong> Phase 4 has zero post-launch observations. Phase 3 has only about two months. More post-data would tighten confidence intervals and reveal whether effects persist.</li>
-      <li><strong>Approximate launch dates.</strong> Phase 2 and Phase 3 were announced as "Summer" and "Fall" 2025. We use June 15 and September 15 as working dates, but the actual rollout may have differed.</li>
+      <li><strong>Data ends November 30, 2025.</strong> Phase 4 has zero post-launch observations. Phase 3 has about 3.5 months. More post-data would tighten confidence intervals and reveal whether effects persist.</li>
+      <li><strong>Launch dates confirmed.</strong> Phase 2 (June 15) and Phase 3 (August 17) dates are confirmed via CTA press releases.</li>
       <li><strong>Small sample.</strong> Only 20 treated routes and ~15 control routes. This limits statistical power, especially for Phases 2 and 3 (4 routes each). Cluster-robust standard errors are wide.</li>
       <li><strong>Possible spillover effects.</strong> If the Frequent Network draws riders from nearby non-FN routes, control route ridership would decrease, biasing DiD estimates upward. We have not tested for this.</li>
       <li><strong>No rider-level data.</strong> We observe boardings per route per day, not individual riders. We cannot distinguish new riders from riders switching from other routes or modes.</li>

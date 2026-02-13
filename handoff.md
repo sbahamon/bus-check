@@ -9,7 +9,7 @@ Inspired by a Bluesky post from @laurie-merrell asking exactly these questions (
 
 ## Tech stack
 - Python 3.11+, managed with **uv** (never system Python)
-- `uv run pytest` for tests (119 passing), `uv run jupyter lab` for notebooks
+- `uv run pytest` for tests (129 passing), `uv run jupyter lab` for notebooks
 - SQLite for data cache
 - Package installed in editable mode: `uv pip install -e .` then `uv run --no-sync` (MUST use `--no-sync` or `uv run` re-syncs and drops the editable install, causing `ModuleNotFoundError`)
 
@@ -26,11 +26,11 @@ A headway collector **may still be running** — check with `ps aux | grep headw
 | Phase | Launch Date | Routes | Post-data available? |
 |-------|------------|--------|---------------------|
 | 1 | Mar 23, 2025 | J14, 34, 47, 54, 60, 63, 79, 95 | ~8 months (strongest) |
-| 2 | Summer 2025 (~Jun 15) | 4, 49, 53, 66 | ~5 months |
-| 3 | Fall 2025 (~Sep 15) | 20, 55, 77, 82 | ~2 months |
+| 2 | Jun 15, 2025 | 4, 20, 49, 66 | ~5 months |
+| 3 | Aug 17, 2025 | 53, 55, 77, 82 | ~3.5 months |
 | 4 | Dec 21, 2025 | 9, 12, 72, 81 | NONE (data ends Nov 30) |
 
-**Note:** Phase 2/3 dates are approximate placeholders in `config.py`. Exact dates need confirmation from CTA press releases.
+**All launch dates confirmed** from CTA press releases.
 
 ## Project structure
 ```
@@ -65,12 +65,12 @@ bus-check/
     07_did_staggered.ipynb          # Callaway-Sant'Anna staggered DiD (EXECUTED)
     08_did_regression.ipynb         # Regression DiD with route+time FE, clustered SEs (EXECUTED)
 
-  tests/                 # 119 tests, all passing
+  tests/                 # 129 tests, all passing
     conftest.py          # Shared fixtures
     fixtures/            # Sample JSON + GTFS files for mocking
-    test_config.py (17), test_db.py (7), test_ridership.py (21),
+    test_config.py (21), test_db.py (7), test_ridership.py (21),
     test_ridership_analysis.py (31), test_bus_tracker.py (11),
-    test_gtfs.py (9), test_headway_analysis.py (19), test_headway_collector.py (6)
+    test_gtfs.py (9), test_headway_analysis.py (25), test_headway_collector.py (6)
 
   site/                  # Static website (GitHub Pages)
     index.html           # Main analysis page
@@ -90,31 +90,27 @@ bus-check/
 ### The headline finding
 The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatment timing across 4 phases. When broken out by phase, **all three phases with data show positive effects**:
 - Phase 1: **+428 rides/day (+5.9%)**, 95% CI [+42, +799]
-- Phase 2: **+586 rides/day (+4.5%)**, 95% CI [+1, +1,271]
-- Phase 3: **+665 rides/day (+6.5%)**, 95% CI [+205, +998]
+- Phase 2: **+514 rides/day (+4.2%)**, 95% CI [+163, +832]
+- Phase 3: **+1,142 rides/day (+10.4%)**, 95% CI [+213, +2,492]
 
 ### Supporting evidence
 - **13/16 Phase 1-3 routes gained riders YoY** — J14 Jeffery Jump best at +26.1%
 - **FN share of total ridership is growing** — +0.3 to +0.9 pp post-launch depending on phase
-- **Regression DiD** (notebook 08): +136 rides/day, positive but p=0.07 (insufficient power with only 31 routes)
+- **Regression DiD** (notebook 08): +236 rides/day (p=0.002 homoskedastic, p=0.22 clustered)
 - **Placebo test passes** (p=0.925) — no evidence of pre-trends
 - **Callaway-Sant'Anna** (notebook 07): formal staggered DiD confirms direction
 - **Excluding Route 79** makes DiD worse, not better — it's not an outlier story
 
 ### Headway adherence (notebook 02, ~17 hours of data)
 - **Schedule promises it:** All 20 routes schedule 97-100% of headways <= 10 min
-- **Reality falls short:** Average 72.9% of observed headways <= 10 min
-- Best: Route 54 (90%), Route 82 (86%), Route 79 (85%)
-- Worst: Route 12 (57%), Route 95 (58%), Route 20 (61%)
+- **Reality falls short:** Average ~59% of observed headways <= 10 min (filtered to service window)
 - **Caveat:** Only ~17 hours of data. Need 2+ weeks for robust conclusions.
 
 ## Known issues
 
 1. **`uv pip install -e .` + `uv run --no-sync` required for notebook execution** — Always use: `uv pip install -e . && uv run --no-sync jupyter execute <notebook> --inplace`
 
-2. **Phase 2/3 launch dates are approximate** — config.py uses Jun 15 and Sep 15 as placeholders.
-
-3. **Headway data is preliminary** — ~17 hours collected so far. Continue running collector for weeks.
+2. **Headway data is preliminary** — ~17 hours collected so far. Continue running collector for weeks.
 
 ## Reproducibility
 - **For humans:** `site/reproducibility.html` — step-by-step guide on the project website
@@ -124,9 +120,9 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 
 ## Pending work
 - [ ] Let collector run for 2+ weeks for robust headway conclusions
-- [ ] Confirm exact Phase 2/3 launch dates from CTA press releases
+- [x] ~~Confirm exact Phase 2/3 launch dates from CTA press releases~~ — Done: Phase 2 = Jun 15, Phase 3 = Aug 17
 - [ ] Re-execute notebook 02 once more headway data is collected
-- [ ] Filter observed headways to service window hours (6am-9pm weekday, 9am-9pm weekend)
+- [x] ~~Filter observed headways to service window hours~~ — Done: `filter_arrivals_to_service_window()` added to headway_analysis.py
 - [ ] Investigate Route 47 (no arrivals detected in headway analysis)
 
 ## Uncommitted changes
@@ -137,7 +133,7 @@ Three fixes from audit feedback (not yet committed):
 
 ## Useful commands
 ```bash
-uv run pytest -v                    # run all 119 tests
+uv run pytest -v                    # run all 129 tests
 uv pip install -e . && uv run --no-sync jupyter lab  # interactive notebooks
 uv pip install -e . && uv run --no-sync jupyter execute notebooks/<NB>.ipynb --inplace  # execute a notebook
 

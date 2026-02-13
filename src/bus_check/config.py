@@ -19,15 +19,15 @@ FREQUENT_NETWORK_PHASES = [
     ),
     FrequentNetworkPhase(
         phase=2,
-        launch_date=date(2025, 6, 15),  # "Summer 2025" — exact date TBD
-        routes=["4", "49", "53", "66"],
-        label="Phase 2 (Summer 2025)",
+        launch_date=date(2025, 6, 15),  # Confirmed: Jun 15, 2025
+        routes=["4", "20", "49", "66"],
+        label="Phase 2 (Jun 2025)",
     ),
     FrequentNetworkPhase(
         phase=3,
-        launch_date=date(2025, 9, 15),  # "Fall 2025" — exact date TBD
-        routes=["20", "55", "77", "82"],
-        label="Phase 3 (Fall 2025)",
+        launch_date=date(2025, 8, 17),  # Confirmed: Aug 17, 2025
+        routes=["53", "55", "77", "82"],
+        label="Phase 3 (Aug 2025)",
     ),
     FrequentNetworkPhase(
         phase=4,

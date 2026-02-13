@@ -2,6 +2,8 @@
 
 import pandas as pd
 
+from bus_check.config import is_in_service_window
+
 
 def compute_headway_metrics(headways: pd.Series) -> dict:
     """Compute comprehensive headway metrics from a Series of headway values (minutes).
@@ -106,3 +108,21 @@ def compute_headways_from_arrivals(arrivals: pd.DataFrame) -> pd.Series:
     # Convert timedelta to minutes
     headways = time_diffs.dt.total_seconds() / 60.0
     return headways.reset_index(drop=True)
+
+
+def filter_arrivals_to_service_window(arrivals: pd.DataFrame) -> pd.DataFrame:
+    """Filter arrivals to the Frequent Network service window.
+
+    Weekdays: 6am-9pm, Weekends: 9am-9pm.
+    """
+    if arrivals.empty:
+        return arrivals.copy()
+
+    times = pd.to_datetime(arrivals["arrival_time"])
+    hours = times.dt.hour
+    is_weekday = times.dt.dayofweek < 5
+    mask = pd.Series(
+        [is_in_service_window(h, wd) for h, wd in zip(hours, is_weekday)],
+        index=arrivals.index,
+    )
+    return arrivals[mask].reset_index(drop=True)

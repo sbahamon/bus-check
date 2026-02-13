@@ -36,6 +36,14 @@ def test_phase_1_launch_date():
     assert FREQUENT_NETWORK_PHASES[0].launch_date == date(2025, 3, 23)
 
 
+def test_phase_2_launch_date():
+    assert FREQUENT_NETWORK_PHASES[1].launch_date == date(2025, 6, 15)
+
+
+def test_phase_3_launch_date():
+    assert FREQUENT_NETWORK_PHASES[2].launch_date == date(2025, 8, 17)
+
+
 def test_phase_4_launch_date():
     assert FREQUENT_NETWORK_PHASES[3].launch_date == date(2025, 12, 21)
 
@@ -65,6 +73,18 @@ def test_get_phase_for_route_phase_4():
 def test_get_phase_for_route_j14():
     phase = get_phase_for_route("J14")
     assert phase.phase == 1
+
+
+def test_get_phase_for_route_route_20_phase_2():
+    """Route 20 was moved from Phase 3 to Phase 2 (confirmed Jun 2025 batch)."""
+    phase = get_phase_for_route("20")
+    assert phase.phase == 2
+
+
+def test_get_phase_for_route_route_53_phase_3():
+    """Route 53 was moved from Phase 2 to Phase 3 (confirmed Aug 17 batch)."""
+    phase = get_phase_for_route("53")
+    assert phase.phase == 3
 
 
 def test_get_phase_for_route_unknown():

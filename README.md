@@ -11,12 +11,12 @@ This project analyzes Chicago's 20 Frequent Network bus routes using ridership d
 | Phase | Launch | Routes | DiD Estimate | 95% CI |
 |-------|--------|--------|-------------|--------|
 | 1 | Mar 2025 | J14, 34, 47, 54, 60, 63, 79, 95 | +428 rides/day (+5.9%) | [+42, +799] |
-| 2 | Summer 2025 | 4, 49, 53, 66 | +586 rides/day (+4.5%) | [+1, +1,271] |
-| 3 | Fall 2025 | 20, 55, 77, 82 | +665 rides/day (+6.5%) | [+205, +998] |
+| 2 | Jun 2025 | 4, 20, 49, 66 | +514 rides/day (+4.2%) | [+163, +832] |
+| 3 | Aug 2025 | 53, 55, 77, 82 | +1,142 rides/day (+10.4%) | [+213, +2,492] |
 
 13 of 16 Phase 1-3 routes gained riders year-over-year. J14 Jeffery Jump led with +26.1%.
 
-**Headways fall short of the promise.** All 20 routes schedule 97-100% of headways at 10 minutes or less. In practice, only 72.9% of observed headways meet that bar (based on ~17 hours of collected data — more collection needed).
+**Headways fall short of the promise.** All 20 routes schedule 97-100% of headways at 10 minutes or less. In practice, only about 59% of observed headways meet that bar during service window hours (based on ~17 hours of collected data — more collection needed).
 
 ## Notebooks
 
@@ -37,7 +37,7 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync                    # install dependencies
-uv run pytest              # run tests (119 passing)
+uv run pytest              # run tests (129 passing)
 uv pip install -e .        # required before running notebooks
 uv run --no-sync jupyter lab  # open notebooks
 ```
@@ -77,5 +77,5 @@ src/bus_check/
   analysis/          # Statistical models (ridership DiD, headway metrics)
   collector/         # Real-time Bus Tracker polling pipeline
 notebooks/           # Jupyter notebooks (all executed with outputs)
-tests/               # 119 tests — pytest with HTTP mocking via responses
+tests/               # 129 tests — pytest with HTTP mocking via responses
 ```

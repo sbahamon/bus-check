@@ -41,7 +41,7 @@
 <div class="callout">
   <div class="container">
     <div class="callout-label">Key Finding</div>
-    <h2>Ridership is up +4.5% to +6.5% on every phase with data</h2>
+    <h2>Ridership is up +4.2% to +10.4% on every phase with data</h2>
     <p>Using phase-level difference-in-differences with bootstrap confidence intervals, we compared Frequent Network routes against similar non-FN routes. When each rollout phase is analyzed separately, all three with sufficient post-launch data show statistically significant ridership gains. These results are corroborated by a Callaway-Sant&rsquo;Anna staggered estimator and regression with fixed effects.</p>
   </div>
 </div>
@@ -53,8 +53,8 @@
     <p class="section-lead">CTA's Frequent Network rolled out in four phases from March to December 2025. Click any route for details.</p>
     <div class="phase-legend">
       <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-1)"></span>Phase 1 &middot; Mar 2025</span>
-      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-2)"></span>Phase 2 &middot; Summer 2025</span>
-      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-3)"></span>Phase 3 &middot; Fall 2025</span>
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-2)"></span>Phase 2 &middot; Jun 2025</span>
+      <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-3)"></span>Phase 3 &middot; Aug 2025</span>
       <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-4)"></span>Phase 4 &middot; Dec 2025</span>
     </div>
     <div id="map"></div>
@@ -81,17 +81,17 @@
         </tr>
         <tr>
           <td><span class="did-phase-dot" style="background:var(--phase-2)"></span>Phase 2</td>
-          <td>4, 49, 53, 66</td>
-          <td class="did-estimate" style="color:var(--positive)">+586</td>
-          <td class="did-estimate" style="color:var(--positive)">+4.5%</td>
-          <td class="did-ci">[+1, +1,271]</td>
+          <td>4, 20, 49, 66</td>
+          <td class="did-estimate" style="color:var(--positive)">+514</td>
+          <td class="did-estimate" style="color:var(--positive)">+4.2%</td>
+          <td class="did-ci">[+163, +832]</td>
         </tr>
         <tr>
           <td><span class="did-phase-dot" style="background:var(--phase-3)"></span>Phase 3</td>
-          <td>20, 55, 77, 82</td>
-          <td class="did-estimate" style="color:var(--positive)">+665</td>
-          <td class="did-estimate" style="color:var(--positive)">+6.5%</td>
-          <td class="did-ci">[+205, +998]</td>
+          <td>53, 55, 77, 82</td>
+          <td class="did-estimate" style="color:var(--positive)">+1,142</td>
+          <td class="did-estimate" style="color:var(--positive)">+10.4%</td>
+          <td class="did-ci">[+213, +2,492]</td>
         </tr>
         <tr>
           <td><span class="did-phase-dot" style="background:var(--phase-4)"></span>Phase 4</td>
@@ -178,26 +178,26 @@ const PHASE_COLORS = {1:'#0066CC', 2:'#2A9D4E', 3:'#E67E22', 4:'#C0392B'};
 const YOY_DATA = [
   {route:'J14', name:'Jeffery Jump', phase:1, yoy:26.1},
   {route:'60', name:'Blue Island/26th', phase:1, yoy:13.6},
-  {route:'47', name:'47th', phase:1, yoy:12.8},
-  {route:'34', name:'South Michigan', phase:1, yoy:9.7},
-  {route:'63', name:'63rd', phase:1, yoy:8.6},
-  {route:'54', name:'Cicero', phase:1, yoy:5.6},
-  {route:'95', name:'95th', phase:1, yoy:3.2},
+  {route:'95', name:'95th', phase:1, yoy:12.8},
+  {route:'63', name:'63rd', phase:1, yoy:7.5},
+  {route:'54', name:'Cicero', phase:1, yoy:1.7},
+  {route:'34', name:'South Michigan', phase:1, yoy:1.2},
+  {route:'47', name:'47th', phase:1, yoy:0.5},
   {route:'79', name:'79th', phase:1, yoy:-6.2},
-  {route:'4', name:'Cottage Grove', phase:2, yoy:7.8},
-  {route:'66', name:'Chicago', phase:2, yoy:6.2},
-  {route:'49', name:'Western', phase:2, yoy:3.1},
-  {route:'53', name:'Pulaski', phase:2, yoy:2.4},
-  {route:'77', name:'Belmont', phase:3, yoy:4.8},
-  {route:'20', name:'Madison', phase:3, yoy:3.5},
-  {route:'82', name:'Kimball/Homan', phase:3, yoy:-1.4},
-  {route:'55', name:'Garfield', phase:3, yoy:-0.2},
+  {route:'20', name:'Madison', phase:2, yoy:7.4},
+  {route:'49', name:'Western', phase:2, yoy:6.8},
+  {route:'66', name:'Chicago', phase:2, yoy:5.4},
+  {route:'4', name:'Cottage Grove', phase:2, yoy:5.2},
+  {route:'53', name:'Pulaski', phase:3, yoy:14.9},
+  {route:'77', name:'Belmont', phase:3, yoy:2.8},
+  {route:'55', name:'Garfield', phase:3, yoy:-1.0},
+  {route:'82', name:'Kimball/Homan', phase:3, yoy:-1.7},
 ];
 
 const DID_DATA = [
   {phase:1, label:'Phase 1', estimate:428, pct:5.9, ci_lo:42, ci_hi:799},
-  {phase:2, label:'Phase 2', estimate:586, pct:4.5, ci_lo:1, ci_hi:1271},
-  {phase:3, label:'Phase 3', estimate:665, pct:6.5, ci_lo:205, ci_hi:998},
+  {phase:2, label:'Phase 2', estimate:514, pct:4.2, ci_lo:163, ci_hi:832},
+  {phase:3, label:'Phase 3', estimate:1142, pct:10.4, ci_lo:213, ci_hi:2492},
 ];
 
 // Monthly FN share of total CTA bus ridership (from notebook 05)
@@ -274,7 +274,7 @@ Plotly.newPlot('chart-did', [{
   ...PLOT_LAYOUT_BASE,
   height:260,
   margin:{l:90, r:40, t:40, b:48},
-  xaxis:{title:'Additional rides per day', gridcolor:'#E8E8E4', zeroline:true, zerolinecolor:'#D4D4CE', range:[-100, 1400]},
+  xaxis:{title:'Additional rides per day', gridcolor:'#E8E8E4', zeroline:true, zerolinecolor:'#D4D4CE', range:[-200, 2700]},
   yaxis:{autorange:'reversed'},
   annotations: DID_DATA.map(d => ({
     x: d.estimate,
@@ -326,12 +326,12 @@ Plotly.newPlot('chart-share', [{
   shapes: [
     {type:'line', x0:'2025-03', x1:'2025-03', y0:0, y1:1, yref:'paper', line:{color:PHASE_COLORS[1], width:1.5, dash:'dot'}},
     {type:'line', x0:'2025-06', x1:'2025-06', y0:0, y1:1, yref:'paper', line:{color:PHASE_COLORS[2], width:1.5, dash:'dot'}},
-    {type:'line', x0:'2025-09', x1:'2025-09', y0:0, y1:1, yref:'paper', line:{color:PHASE_COLORS[3], width:1.5, dash:'dot'}},
+    {type:'line', x0:'2025-08', x1:'2025-08', y0:0, y1:1, yref:'paper', line:{color:PHASE_COLORS[3], width:1.5, dash:'dot'}},
   ],
   annotations: [
     {x:'2025-03', y:39.8, yref:'y', text:'Phase 1', showarrow:false, font:{size:11, color:PHASE_COLORS[1], weight:600}, xanchor:'right', xshift:-6},
     {x:'2025-06', y:39.8, yref:'y', text:'Phase 2', showarrow:false, font:{size:11, color:PHASE_COLORS[2], weight:600}, xanchor:'right', xshift:-6},
-    {x:'2025-09', y:39.8, yref:'y', text:'Phase 3', showarrow:false, font:{size:11, color:PHASE_COLORS[3], weight:600}, xanchor:'right', xshift:-6},
+    {x:'2025-08', y:39.8, yref:'y', text:'Phase 3', showarrow:false, font:{size:11, color:PHASE_COLORS[3], weight:600}, xanchor:'right', xshift:-6},
   ],
 }, PLOT_CONFIG);
 </script>

@@ -6,6 +6,7 @@ from bus_check.analysis.headway_analysis import (
     compute_headway_metrics,
     compute_headways_from_arrivals,
     detect_stop_arrivals,
+    filter_arrivals_to_service_window,
 )
 
 
@@ -219,3 +220,113 @@ def test_compute_headways_from_arrivals_unsorted():
     headways = compute_headways_from_arrivals(arrivals)
     assert headways.iloc[0] == pytest.approx(10.0)
     assert headways.iloc[1] == pytest.approx(15.0)
+
+
+# --- filter_arrivals_to_service_window ---
+
+
+def test_filter_arrivals_to_service_window_weekday():
+    """Weekday: 6am-9pm window. 5:30am and 9:30pm/11pm out, 8am/12pm in."""
+    arrivals = pd.DataFrame(
+        {
+            "vid": ["A", "B", "C", "D", "E"],
+            "arrival_time": pd.to_datetime(
+                [
+                    "2025-04-02 05:30",  # Wed, out (before 6am)
+                    "2025-04-02 08:00",  # Wed, in
+                    "2025-04-02 12:00",  # Wed, in
+                    "2025-04-02 21:30",  # Wed, out (after 9pm)
+                    "2025-04-02 23:00",  # Wed, out
+                ]
+            ),
+            "pdist_at_arrival": [100, 200, 300, 400, 500],
+        }
+    )
+    result = filter_arrivals_to_service_window(arrivals)
+    assert len(result) == 2
+    assert list(result["vid"]) == ["B", "C"]
+
+
+def test_filter_arrivals_to_service_window_weekend():
+    """Weekend: 9am-9pm window. 7am/8:59am out, 9am/2pm in, 9pm out."""
+    arrivals = pd.DataFrame(
+        {
+            "vid": ["A", "B", "C", "D", "E"],
+            "arrival_time": pd.to_datetime(
+                [
+                    "2025-04-05 07:00",  # Sat, out (before 9am)
+                    "2025-04-05 08:59",  # Sat, out (before 9am)
+                    "2025-04-05 09:00",  # Sat, in
+                    "2025-04-05 14:00",  # Sat, in
+                    "2025-04-05 21:00",  # Sat, out (at 9pm = hour 21)
+                ]
+            ),
+            "pdist_at_arrival": [100, 200, 300, 400, 500],
+        }
+    )
+    result = filter_arrivals_to_service_window(arrivals)
+    assert len(result) == 2
+    assert list(result["vid"]) == ["C", "D"]
+
+
+def test_filter_arrivals_to_service_window_empty():
+    """Empty DataFrame in → empty DataFrame out."""
+    arrivals = pd.DataFrame(columns=["vid", "arrival_time", "pdist_at_arrival"])
+    result = filter_arrivals_to_service_window(arrivals)
+    assert len(result) == 0
+    assert list(result.columns) == ["vid", "arrival_time", "pdist_at_arrival"]
+
+
+def test_filter_arrivals_to_service_window_all_outside():
+    """All arrivals at 3am on a weekday → empty result."""
+    arrivals = pd.DataFrame(
+        {
+            "vid": ["A", "B", "C"],
+            "arrival_time": pd.to_datetime(
+                [
+                    "2025-04-01 03:00",  # Tue 3am
+                    "2025-04-01 03:10",
+                    "2025-04-01 03:20",
+                ]
+            ),
+            "pdist_at_arrival": [100, 200, 300],
+        }
+    )
+    result = filter_arrivals_to_service_window(arrivals)
+    assert len(result) == 0
+
+
+def test_filter_arrivals_to_service_window_preserves_columns():
+    """All expected columns (vid, arrival_time, pdist_at_arrival) are preserved."""
+    arrivals = pd.DataFrame(
+        {
+            "vid": ["A"],
+            "arrival_time": pd.to_datetime(["2025-04-01 10:00"]),  # Tue 10am, in
+            "pdist_at_arrival": [5000],
+        }
+    )
+    result = filter_arrivals_to_service_window(arrivals)
+    assert len(result) == 1
+    assert set(result.columns) == {"vid", "arrival_time", "pdist_at_arrival"}
+    assert result["vid"].iloc[0] == "A"
+    assert result["pdist_at_arrival"].iloc[0] == 5000
+
+
+def test_filter_arrivals_to_service_window_mixed_days():
+    """Weekday 7am (in), Saturday 7am (out), Saturday 10am (in)."""
+    arrivals = pd.DataFrame(
+        {
+            "vid": ["A", "B", "C"],
+            "arrival_time": pd.to_datetime(
+                [
+                    "2025-04-01 07:00",  # Tue 7am — in (weekday 6-21)
+                    "2025-04-05 07:00",  # Sat 7am — out (weekend 9-21)
+                    "2025-04-05 10:00",  # Sat 10am — in (weekend 9-21)
+                ]
+            ),
+            "pdist_at_arrival": [100, 200, 300],
+        }
+    )
+    result = filter_arrivals_to_service_window(arrivals)
+    assert len(result) == 2
+    assert list(result["vid"]) == ["A", "C"]

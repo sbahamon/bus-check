@@ -43,7 +43,7 @@
     </div>
 
     <h2>Schedule vs. Reality</h2>
-    <p class="section-lead">CTA schedules 97&ndash;100% of Frequent Network headways at 10 minutes or less. In our observations, only about 73% of headways actually met that promise. The gap between what's planned and what riders experience is significant across nearly every route.</p>
+    <p class="section-lead">CTA schedules 97&ndash;100% of Frequent Network headways at 10 minutes or less. In our observations, only about 59% of headways actually met that promise (filtered to the service window). The gap between what's planned and what riders experience is significant across nearly every route.</p>
 
     <div class="phase-legend">
       <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-1)"></span>Phase 1</span>
@@ -117,26 +117,25 @@
 const PHASE_COLORS = {1:'#0066CC', 2:'#2A9D4E', 3:'#E67E22', 4:'#C0392B'};
 
 const HEADWAY_DATA = [
-  {route:'54', name:'Cicero', phase:1, scheduled:99, observed:90},
-  {route:'82', name:'Kimball/Homan', phase:3, scheduled:98, observed:86},
-  {route:'79', name:'79th', phase:1, scheduled:100, observed:85},
-  {route:'77', name:'Belmont', phase:3, scheduled:99, observed:83},
-  {route:'J14', name:'Jeffery Jump', phase:1, scheduled:97, observed:80},
-  {route:'34', name:'South Michigan', phase:1, scheduled:99, observed:79},
-  {route:'4', name:'Cottage Grove', phase:2, scheduled:98, observed:78},
-  {route:'63', name:'63rd', phase:1, scheduled:99, observed:76},
-  {route:'66', name:'Chicago', phase:2, scheduled:98, observed:75},
-  {route:'81', name:'Lawrence', phase:4, scheduled:99, observed:74},
-  {route:'49', name:'Western', phase:2, scheduled:99, observed:73},
-  {route:'60', name:'Blue Island/26th', phase:1, scheduled:98, observed:71},
-  {route:'55', name:'Garfield', phase:3, scheduled:99, observed:68},
-  {route:'9', name:'Ashland', phase:4, scheduled:98, observed:67},
-  {route:'72', name:'North', phase:4, scheduled:99, observed:65},
-  {route:'47', name:'47th', phase:1, scheduled:99, observed:64},
-  {route:'53', name:'Pulaski', phase:2, scheduled:99, observed:63},
-  {route:'20', name:'Madison', phase:3, scheduled:98, observed:61},
-  {route:'95', name:'95th', phase:1, scheduled:100, observed:58},
-  {route:'12', name:'Roosevelt', phase:4, scheduled:98, observed:57},
+  {route:'72', name:'North', phase:4, scheduled:100, observed:74},
+  {route:'82', name:'Kimball/Homan', phase:3, scheduled:100, observed:74},
+  {route:'79', name:'79th', phase:1, scheduled:100, observed:74},
+  {route:'53', name:'Pulaski', phase:3, scheduled:100, observed:71},
+  {route:'54', name:'Cicero', phase:1, scheduled:100, observed:70},
+  {route:'77', name:'Belmont', phase:3, scheduled:100, observed:67},
+  {route:'66', name:'Chicago', phase:2, scheduled:100, observed:64},
+  {route:'49', name:'Western', phase:2, scheduled:99, observed:63},
+  {route:'4', name:'Cottage Grove', phase:2, scheduled:100, observed:59},
+  {route:'63', name:'63rd', phase:1, scheduled:100, observed:58},
+  {route:'95', name:'95th', phase:1, scheduled:100, observed:57},
+  {route:'81', name:'Lawrence', phase:4, scheduled:100, observed:56},
+  {route:'55', name:'Garfield', phase:3, scheduled:100, observed:53},
+  {route:'12', name:'Roosevelt', phase:4, scheduled:100, observed:53},
+  {route:'60', name:'Blue Island/26th', phase:1, scheduled:100, observed:51},
+  {route:'20', name:'Madison', phase:2, scheduled:100, observed:50},
+  {route:'34', name:'South Michigan', phase:1, scheduled:100, observed:46},
+  {route:'J14', name:'Jeffery Jump', phase:1, scheduled:100, observed:45},
+  {route:'9', name:'Ashland', phase:4, scheduled:97, observed:32},
 ];
 
 const PLOT_FONT = {family:'IBM Plex Sans, sans-serif', color:'#1A1A18'};

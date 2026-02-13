@@ -26,7 +26,7 @@ uv pip install -e .
 ## Running Tests
 
 ```bash
-uv run pytest          # all 119 tests should pass
+uv run pytest          # all 129 tests should pass
 uv run pytest -v       # verbose output
 ```
 
@@ -57,7 +57,7 @@ done
 | 03_ridership_phases_1_3 | Phase 1-3 only analysis (excludes Phase 4) | SODA API | Filtered YoY comparison |
 | 04_ridership_without_79 | Sensitivity: excludes Route 79 outlier | SODA API | Robustness check |
 | 05_ridership_share | FN share of total CTA ridership over time | SODA API | Share trend lines |
-| 06_did_by_phase | Phase-level DiD with bootstrap CIs | SODA API | **Main finding**: P1 +428, P2 +586, P3 +665 |
+| 06_did_by_phase | Phase-level DiD with bootstrap CIs | SODA API | **Main finding**: P1 +428, P2 +514, P3 +1,142 |
 | 07_did_staggered | Callaway-Sant'Anna staggered DiD | SODA API | ATT estimate |
 | 08_did_regression | OLS with route+time FE, clustered SEs, placebo | SODA API | Regression DiD, placebo test |
 
@@ -66,12 +66,12 @@ done
 Key numbers that notebook outputs should match:
 
 - **Phase 1 DiD**: +428 rides/day (+5.9%), 95% CI [+42, +799]
-- **Phase 2 DiD**: +586 rides/day (+4.5%), 95% CI [+1, +1,271]
-- **Phase 3 DiD**: +665 rides/day (+6.5%), 95% CI [+205, +998]
+- **Phase 2 DiD**: +514 rides/day (+4.2%), 95% CI [+163, +832]
+- **Phase 3 DiD**: +1,142 rides/day (+10.4%), 95% CI [+213, +2,492]
 - **J14 Jeffery Jump YoY**: +26.1%
 - **13 of 16** Phase 1-3 routes gained riders YoY
 - **Placebo test p-value**: 0.925 (no pre-trends)
-- **Regression DiD**: +136/day (p=0.07 homoskedastic, p=0.39 clustered)
+- **Regression DiD**: +236/day (p=0.002 homoskedastic, p=0.22 clustered)
 
 ## Data Sources
 
@@ -94,7 +94,7 @@ src/bus_check/
   analysis/          # Statistical models (ridership_analysis.py, headway_analysis.py)
   collector/         # Real-time Bus Tracker polling
 notebooks/           # 8 analysis notebooks
-tests/               # 119 tests (pytest + responses HTTP mocking)
+tests/               # 129 tests (pytest + responses HTTP mocking)
 site/                # Static website (GitHub Pages)
 ```
 

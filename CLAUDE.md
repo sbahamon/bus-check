@@ -13,7 +13,7 @@ Analyzes CTA Frequent Network bus routes to determine:
 
 ## Key commands
 - `uv sync` — install all deps
-- `uv run pytest` — run all tests (119 passing)
+- `uv run pytest` — run all tests (129 passing)
 - `uv run pytest tests/test_ridership.py -v` — run specific test file
 - `uv run python -m bus_check.collector.headway_collector` — run headway collector
 - `uv pip install -e . && uv run --no-sync jupyter lab` — open notebooks
@@ -49,4 +49,4 @@ Analyzes CTA Frequent Network bus routes to determine:
 
 ## Reproducing results
 See `REPRODUCING.md` for step-by-step instructions to verify all findings.
-Run `uv run pytest` (119 tests) and execute all 8 notebooks to confirm.
+Run `uv run pytest` (129 tests) and execute all 8 notebooks to confirm.
