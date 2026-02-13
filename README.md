@@ -16,7 +16,7 @@ This project analyzes Chicago's 20 Frequent Network bus routes using ridership d
 
 13 of 16 Phase 1-3 routes gained riders year-over-year. J14 Jeffery Jump led with +26.1%.
 
-**Headways fall short of the promise.** All 20 routes schedule 97-100% of headways at 10 minutes or less. In practice, only about 59% of observed headways meet that bar during service window hours (based on ~17 hours of collected data — more collection needed).
+**Headways fall short of the promise.** All 20 routes schedule 97-100% of headways at 10 minutes or less. In practice, only about 59% of observed headways meet that bar during service window hours (based on ~45 hours of collected data — more collection needed).
 
 ## Notebooks
 

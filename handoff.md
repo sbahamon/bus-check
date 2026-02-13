@@ -101,16 +101,16 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 - **Callaway-Sant'Anna** (notebook 07): formal staggered DiD confirms direction
 - **Excluding Route 79** makes DiD worse, not better — it's not an outlier story
 
-### Headway adherence (notebook 02, ~17 hours of data)
+### Headway adherence (notebook 02, ~45 hours of data)
 - **Schedule promises it:** All 20 routes schedule 97-100% of headways <= 10 min
 - **Reality falls short:** Average ~59% of observed headways <= 10 min (filtered to service window)
-- **Caveat:** Only ~17 hours of data. Need 2+ weeks for robust conclusions.
+- **Caveat:** Only ~45 hours of data. Need 2+ weeks for robust conclusions.
 
 ## Known issues
 
 1. **`uv pip install -e .` + `uv run --no-sync` required for notebook execution** — Always use: `uv pip install -e . && uv run --no-sync jupyter execute <notebook> --inplace`
 
-2. **Headway data is preliminary** — ~17 hours collected so far. Continue running collector for weeks.
+2. **Headway data is preliminary** — ~45 hours collected so far. Continue running collector for weeks.
 
 ## Reproducibility
 - **For humans:** `site/reproducibility.html` — step-by-step guide on the project website

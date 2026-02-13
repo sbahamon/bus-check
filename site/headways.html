@@ -39,7 +39,7 @@
 <section>
   <div class="container">
     <div class="callout-warning">
-      <p><strong>Preliminary data.</strong> These results are based on approximately 17 hours of real-time data collection on February 11&ndash;12, 2026. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
+      <p><strong>Preliminary data.</strong> These results are based on approximately 45 hours of real-time data collection across February 11&ndash;13, 2026. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
     </div>
 
     <h2>Schedule vs. Reality</h2>
@@ -74,7 +74,7 @@
     <p>Both scheduled and observed headways are filtered to these windows for comparison.</p>
 
     <h3>Data collection period</h3>
-    <p>Our headway collector ran for approximately <strong>17 hours</strong> across February 11&ndash;12, 2026. This covers portions of two weekdays. Weekend data has not yet been collected.</p>
+    <p>Our headway collector ran for approximately <strong>45 hours</strong> across February 11&ndash;13, 2026. This covers portions of three weekdays. Weekend data has not yet been collected.</p>
   </div>
 </section>
 
@@ -83,8 +83,8 @@
   <div class="container prose">
     <h2>Limitations</h2>
     <ul>
-      <li><strong>Very limited sample.</strong> 17 hours of data is not enough for statistically robust conclusions. Weather, construction, special events, and normal daily variation mean that any single day can be unrepresentative. At minimum, two weeks of continuous data across weekdays and weekends are needed.</li>
-      <li><strong>Route #47 missing.</strong> Route 47 (47th Street) had no valid stop arrivals detected during the collection period, so it's excluded from the observed headway results. All other 19 routes have data.</li>
+      <li><strong>Limited sample.</strong> 45 hours of data across three weekdays is not enough for statistically robust conclusions. Weather, construction, special events, and normal daily variation mean that any single day can be unrepresentative. At minimum, two weeks of continuous data across weekdays and weekends are needed.</li>
+      <li><strong>Route #47 missing.</strong> Route 47 (47th Street) had only 1 valid stop arrival detected during the collection period, so it's excluded from the observed headway results. All other 19 routes have data.</li>
       <li><strong>Reference stop selection.</strong> We use a single reference stop per route (the midpoint). Headway performance may vary at different points along a route &mdash; buses can bunch or spread out as they travel.</li>
       <li><strong>No weekday/weekend separation.</strong> The current data is all weekday. Weekend headway performance has not been assessed.</li>
       <li><strong>Arrival detection.</strong> The 30-meter proximity threshold for detecting arrivals may occasionally miss stops or double-count vehicles that linger near a stop.</li>
@@ -99,7 +99,7 @@
       <div>
         <dl class="footer-sources">
           <dt>Real-time positions</dt>
-          <dd>CTA Bus Tracker API &middot; ~17 hours collected (Feb 11&ndash;12, 2026)</dd>
+          <dd>CTA Bus Tracker API &middot; ~45 hours collected (Feb 11&ndash;13, 2026)</dd>
           <dt>Schedules</dt>
           <dd>CTA GTFS static feed</dd>
         </dl>
@@ -130,7 +130,7 @@ const HEADWAY_DATA = [
   {route:'95', name:'95th', phase:1, scheduled:100, observed:57},
   {route:'81', name:'Lawrence', phase:4, scheduled:100, observed:56},
   {route:'55', name:'Garfield', phase:3, scheduled:100, observed:53},
-  {route:'12', name:'Roosevelt', phase:4, scheduled:100, observed:53},
+  {route:'12', name:'Roosevelt', phase:4, scheduled:100, observed:52},
   {route:'60', name:'Blue Island/26th', phase:1, scheduled:100, observed:51},
   {route:'20', name:'Madison', phase:2, scheduled:100, observed:50},
   {route:'34', name:'South Michigan', phase:1, scheduled:100, observed:46},
