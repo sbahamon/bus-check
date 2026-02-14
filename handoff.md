@@ -65,12 +65,13 @@ bus-check/
     07_did_staggered.ipynb          # Callaway-Sant'Anna staggered DiD (EXECUTED)
     08_did_regression.ipynb         # Regression DiD with route+time FE, clustered SEs (EXECUTED)
 
-  tests/                 # 155 tests, all passing
+  tests/                 # 159 tests, all passing
     conftest.py          # Shared fixtures
     fixtures/            # Sample JSON + GTFS files for mocking
     test_config.py (21), test_db.py (7), test_ridership.py (21),
     test_ridership_analysis.py (31), test_bus_tracker.py (11),
-    test_gtfs.py (9), test_headway_analysis.py (25), test_headway_collector.py (6)
+    test_gtfs.py (9), test_headway_analysis.py (25), test_headway_collector.py (6),
+    test_d1_client.py (10), test_collect_to_d1.py (5), test_update_headways.py (15)
 
   site/                  # Static website (GitHub Pages)
     index.html           # Main analysis page
@@ -101,16 +102,16 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 - **Callaway-Sant'Anna** (notebook 07): formal staggered DiD confirms direction
 - **Excluding Route 79** makes DiD worse, not better — it's not an outlier story
 
-### Headway adherence (notebook 02, ~45 hours of data)
+### Headway adherence (notebook 02, data collected continuously)
 - **Schedule promises it:** All 20 routes schedule 97-100% of headways <= 10 min
 - **Reality falls short:** Average ~59% of observed headways <= 10 min (filtered to service window)
-- **Caveat:** Only ~45 hours of data. Need 2+ weeks for robust conclusions.
+- **Caveat:** Data collected continuously via GitHub Actions. Need 2+ weeks for robust conclusions.
 
 ## Known issues
 
 1. **`uv pip install -e .` + `uv run --no-sync` required for notebook execution** — Always use: `uv pip install -e . && uv run --no-sync jupyter execute <notebook> --inplace`
 
-2. **Headway data is preliminary** — ~45 hours collected so far. Continue running collector for weeks.
+2. **Headway data is preliminary** — collected continuously via GitHub Actions + Cloudflare D1. Need 2+ weeks for robust conclusions.
 
 ## Reproducibility
 - **For humans:** `site/reproducibility.html` — step-by-step guide on the project website
@@ -133,7 +134,7 @@ Three fixes from audit feedback (not yet committed):
 
 ## Useful commands
 ```bash
-uv run pytest -v                    # run all 155 tests (129 core + 20 D1/automation)
+uv run pytest -v                    # run all 159 tests
 uv pip install -e . && uv run --no-sync jupyter lab  # interactive notebooks
 uv pip install -e . && uv run --no-sync jupyter execute notebooks/<NB>.ipynb --inplace  # execute a notebook
 
