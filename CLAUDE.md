@@ -9,11 +9,11 @@ Analyzes CTA Frequent Network bus routes to determine:
 - Python 3.11+, managed with `uv` (NO system Python installs)
 - `uv run` for all script/test execution
 - `uv run pytest` for tests
-- SQLite for local data cache
+- SQLite for local data cache, Cloudflare D1 for cloud collection
 
 ## Key commands
 - `uv sync` — install all deps
-- `uv run pytest` — run all tests (129 passing)
+- `uv run pytest` — run all tests (148 passing)
 - `uv run pytest tests/test_ridership.py -v` — run specific test file
 - `uv run python -m bus_check.collector.headway_collector` — run headway collector
 - `uv pip install -e . && uv run --no-sync jupyter lab` — open notebooks
@@ -23,12 +23,13 @@ Analyzes CTA Frequent Network bus routes to determine:
 
 ## Project layout
 - `src/bus_check/config.py` — all route/phase/service-window constants
-- `src/bus_check/data/` — API clients (ridership.py, bus_tracker.py, gtfs.py, db.py)
+- `src/bus_check/data/` — API clients (ridership.py, bus_tracker.py, gtfs.py, db.py, d1_client.py)
 - `src/bus_check/analysis/` — statistical models (ridership_analysis.py, headway_analysis.py)
 - `src/bus_check/viz/` — chart generators
 - `src/bus_check/collector/` — real-time Bus Tracker polling pipeline
 - `tests/` — mirrors src/ structure, test-first development
 - `notebooks/` — Jupyter notebooks for exploration and final output
+- `scripts/` — automation scripts (collect_to_d1.py, update_headways.py)
 - `site/` — static website (GitHub Pages): analysis, headways, methodology, reproducibility
 
 ## Testing conventions
@@ -41,6 +42,14 @@ Analyzes CTA Frequent Network bus routes to determine:
 ## Environment
 - `.env` for secrets (CTA_API_KEY, SOCRATA_APP_TOKEN)
 - Never commit .env; .env.example has the template
+- GitHub Actions secrets: CTA_API_KEY, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, D1_DATABASE_ID
+
+## Automated collection (GitHub Actions)
+- `.github/workflows/collect-headways.yml` — polls CTA API every 30 min, writes to Cloudflare D1
+- `.github/workflows/update-headways.yml` — daily analysis: reads D1, updates site/headways.html, pushes
+- `.github/workflows/deploy.yml` — deploys site/ to GitHub Pages on push to main
+- `src/bus_check/data/d1_client.py` — Cloudflare D1 REST API client
+- D1 database: `bus-check-headways` (schema mirrors local SQLite vehicle_positions table)
 
 ## Data sources
 - Chicago Data Portal SODA API: `https://data.cityofchicago.org/resource/jyb9-n7fm.json` (ridership by route)
@@ -49,4 +58,4 @@ Analyzes CTA Frequent Network bus routes to determine:
 
 ## Reproducing results
 See `REPRODUCING.md` for step-by-step instructions to verify all findings.
-Run `uv run pytest` (129 tests) and execute all 8 notebooks to confirm.
+Run `uv run pytest` (148 tests) and execute all 8 notebooks to confirm.
