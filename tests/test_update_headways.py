@@ -146,6 +146,67 @@ def test_update_prose_replaces_hours_and_dates():
     assert "Feb 14" in result
 
 
+def test_update_prose_replaces_current_format():
+    """Should replace the current 'of ... collection (DATE)' format."""
+    html = (
+        '<p>Currently approximately <strong>0 hours</strong> of automated collection (Feb 14, 2026).</p>'
+        '<dd>CTA Bus Tracker API &middot; ~0 hours collected (Feb 14, 2026) &middot; Updated daily</dd>'
+    )
+    stats = {
+        "total_hours": 65,
+        "total_positions": 465000,
+        "date_range": "Feb 11&ndash;14, 2026",
+        "is_preliminary": True,
+    }
+    result = update_prose(html, stats)
+    assert "0 hours" not in result
+    assert "65 hours" in result
+    assert "Feb 11" in result
+
+
+def test_update_prose_idempotent():
+    """Running update_prose twice with different stats should update correctly both times."""
+    html = (
+        '<p>Currently approximately <strong>45 hours</strong> across February 11&ndash;13, 2026.</p>'
+        '<dd>CTA Bus Tracker API &middot; ~45 hours collected (Feb 11&ndash;13, 2026)</dd>'
+        '<li>~45 hours of automated real-time collection so far.</li>'
+    )
+    stats_first = {
+        "total_hours": 65,
+        "total_positions": 465000,
+        "date_range": "Feb 11&ndash;14, 2026",
+        "is_preliminary": True,
+    }
+    result1 = update_prose(html, stats_first)
+    assert "65 hours" in result1
+
+    # Run again with new stats — should replace the first run's output
+    stats_second = {
+        "total_hours": 200,
+        "total_positions": 800000,
+        "date_range": "Feb 11&ndash;20, 2026",
+        "is_preliminary": True,
+    }
+    result2 = update_prose(result1, stats_second)
+    assert "65 hours" not in result2
+    assert "200 hours" in result2
+    assert "Feb 11&ndash;20" in result2
+
+
+def test_update_prose_methodology_bullet():
+    """Should replace the methodology page ~N hours bullet."""
+    html = '<li><strong>Headway data is growing.</strong> ~0 hours of automated real-time collection so far. Data accumulates daily.</li>'
+    stats = {
+        "total_hours": 65,
+        "total_positions": 465000,
+        "date_range": "Feb 11&ndash;14, 2026",
+        "is_preliminary": True,
+    }
+    result = update_prose(html, stats)
+    assert "~65 hours of real-time collection (Feb 11" in result
+    assert "automated" not in result
+
+
 def test_update_prose_preliminary_caveat_stays_when_preliminary():
     """Should keep preliminary warning when < 336 hours."""
     html = (
@@ -164,11 +225,30 @@ def test_update_prose_preliminary_caveat_stays_when_preliminary():
     assert "100 hours" in result
 
 
+def test_update_prose_preliminary_caveat_current_format():
+    """Should update the callout even with the current 'automated' text format."""
+    html = (
+        '    <div class="callout-warning">\n'
+        '      <p><strong>Preliminary data.</strong> These results are based on approximately 0 hours of automated real-time data collection (Feb 14, 2026). Collection runs every 30 minutes via GitHub Actions and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>\n'
+        '    </div>'
+    )
+    stats = {
+        "total_hours": 65,
+        "total_positions": 465000,
+        "date_range": "Feb 11&ndash;14, 2026",
+        "is_preliminary": True,
+    }
+    result = update_prose(html, stats)
+    assert "Preliminary data" in result
+    assert "65 hours" in result
+    assert "Robust conclusions" in result
+
+
 def test_update_prose_preliminary_caveat_replaced_when_robust():
     """Should replace preliminary warning when >= 336 hours (2 weeks)."""
     html = (
         '    <div class="callout-warning">\n'
-        '      <p><strong>Preliminary data.</strong> These results are based on approximately 45 hours of real-time data collection across February 11&ndash;13, 2026. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>\n'
+        '      <p><strong>Preliminary data.</strong> These results are based on approximately 65 hours of real-time data collection (Feb 11&ndash;14, 2026). Collection runs every 30 minutes via GitHub Actions and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>\n'
         '    </div>'
     )
     stats = {
@@ -180,3 +260,4 @@ def test_update_prose_preliminary_caveat_replaced_when_robust():
     result = update_prose(html, stats)
     assert "Preliminary data" not in result
     assert "callout-info" in result
+    assert "500 hours" in result

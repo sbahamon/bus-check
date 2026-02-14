@@ -165,58 +165,70 @@ def build_collection_stats(summary: dict) -> dict:
 
 
 def update_prose(content: str, stats: dict) -> str:
-    """Replace hardcoded collection stats in HTML with current values."""
+    """Replace hardcoded collection stats in HTML with current values.
+
+    All patterns are idempotent: they match both the original hand-written
+    text AND their own previous output, so the script can run repeatedly.
+    """
     hours = stats["total_hours"]
     date_range = stats["date_range"]
 
-    # Replace "approximately <strong>N hours</strong> across DATE"
+    # Pattern 1: "<strong>N hours</strong> of ... collection (DATE)."
+    # Matches "across DATE." (original) and "of QUALIFIER collection (DATE)." (updated)
     content = re.sub(
-        r"approximately <strong>\d+ hours</strong> across [^<]+",
-        f"approximately <strong>{hours} hours</strong> of automated collection "
-        f"({date_range})",
+        r"approximately <strong>\d+ hours</strong> (?:of [^.]+\.|across [^.]+\.)",
+        f"approximately <strong>{hours} hours</strong> of real-time collection "
+        f"({date_range}).",
         content,
     )
 
-    # Replace "N hours of data across ..."
+    # Pattern 2: "N hours of data across/collected ..."
     content = re.sub(
-        r"\d+ hours of data across [^.]+",
+        r"\d+ hours of data (?:across|collected) [^.]+",
         f"{hours} hours of data collected ({date_range})",
         content,
     )
 
-    # Replace "~N hours collected (DATE)" in footer
+    # Pattern 3: "~N hours collected (DATE)" in footer
     content = re.sub(
         r"~\d+ hours collected \([^)]+\)",
         f"~{hours} hours collected ({date_range})",
         content,
     )
 
-    # Replace "Only ~N hours" in methodology
+    # Pattern 4: "~N hours of [automated] real-time collection ..." in methodology
     content = re.sub(
-        r"Only ~\d+ hours of real-time collection",
-        f"~{hours} hours of real-time collection",
+        r"(?:Only )?~\d+ hours of (?:automated )?real-time collection[^.]*\.",
+        f"~{hours} hours of real-time collection ({date_range}).",
         content,
     )
 
-    # Update the preliminary caveat based on data volume
+    # Pattern 5: Update the preliminary caveat based on data volume
     if not stats["is_preliminary"]:
-        # Replace warning callout with info callout
+        # Replace warning/info callout with info callout
         content = re.sub(
-            r'<div class="callout-warning">\s*<p><strong>Preliminary data\.</strong>[^<]*</p>\s*</div>',
+            r'<div class="callout-(?:warning|info)">\s*<p><strong>'
+            r"(?:Preliminary data|Continuously updated)\.</strong>"
+            r"[^<]*</p>\s*</div>",
             f'<div class="callout-info">\n'
-            f'      <p><strong>Continuously updated.</strong> These results are based on '
-            f'{hours} hours of automated real-time data collection '
-            f'({date_range}). Data is collected every 30 minutes and '
-            f'this page updates daily.</p>\n'
-            f'    </div>',
+            f"      <p><strong>Continuously updated.</strong> These results are based on "
+            f"{hours} hours of real-time data collection "
+            f"({date_range}). Data is collected every 30 minutes and "
+            f"this page updates daily.</p>\n"
+            f"    </div>",
             content,
         )
     else:
-        # Keep warning but update the numbers
+        # Keep warning but update the stats between anchors
         content = re.sub(
-            r'(<div class="callout-warning">\s*<p><strong>Preliminary data\.</strong>) These results are based on approximately \d+ hours of real-time data collection across [^.]+\.',
-            rf'\1 These results are based on approximately {hours} hours of real-time data collection ({date_range}).',
+            r"(<div\s+class=\"callout-warning\">\s*<p><strong>Preliminary data\.</strong>)"
+            r".*?(Robust conclusions)",
+            rf"\1 These results are based on approximately {hours} hours of "
+            rf"real-time data collection ({date_range}). "
+            rf"Collection runs every 30 minutes via GitHub Actions and this page "
+            rf"updates daily. \2",
             content,
+            flags=re.DOTALL,
         )
 
     return content
