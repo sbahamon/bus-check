@@ -131,6 +131,46 @@ def test_insert_empty_batch(d1_client):
 
 
 @responses.activate
+def test_insert_batch_chunks_large_batches(d1_client):
+    """insert_vehicle_positions_batch should chunk into groups of 7 rows."""
+    # Add enough mock responses for the expected number of chunks
+    for _ in range(3):  # 15 rows / 7 per chunk = 3 chunks (7 + 7 + 1)
+        responses.add(
+            responses.POST,
+            D1_URL,
+            json={"success": True, "result": [{}]},
+            status=200,
+        )
+    positions = [
+        {
+            "collected_at": f"2026-02-13T10:00:0{i}+00:00",
+            "vid": str(8000 + i),
+            "tmstmp": "20260213 10:00",
+            "route": "79",
+            "direction": "East",
+            "destination": "Lakefront",
+            "lat": 41.75,
+            "lon": -87.65,
+            "heading": 90,
+            "speed": 25,
+            "pdist": 15000,
+            "pattern_id": "7901",
+            "delayed": False,
+        }
+        for i in range(15)
+    ]
+    count = d1_client.insert_vehicle_positions_batch(positions)
+    assert count == 15
+    assert len(responses.calls) == 3  # 7 + 7 + 1
+    # First chunk should have 7 rows = 91 params
+    body0 = json.loads(responses.calls[0].request.body)
+    assert len(body0["params"]) == 91
+    # Last chunk should have 1 row = 13 params
+    body2 = json.loads(responses.calls[2].request.body)
+    assert len(body2["params"]) == 13
+
+
+@responses.activate
 def test_query_vehicle_positions_by_route(d1_client):
     """query_vehicle_positions_by_route should filter by route."""
     responses.add(

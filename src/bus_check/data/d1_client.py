@@ -31,41 +31,46 @@ class D1Client:
         return data["result"][0]
 
     def insert_vehicle_positions_batch(self, positions: list[dict]) -> int:
-        """Insert multiple vehicle positions in a single multi-row INSERT.
+        """Insert vehicle positions in chunked multi-row INSERTs.
 
-        D1 supports SQL statements up to 100KB. With ~316 rows at ~200 bytes
-        each, a typical poll batch is ~63KB — well within limits.
+        D1 limits bound parameters to 100 per query. With 13 columns per row,
+        we batch at 7 rows per INSERT (91 params) to stay within limits.
         """
         if not positions:
             return 0
 
-        placeholders = []
-        params = []
-        for p in positions:
-            placeholders.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-            params.extend([
-                p["collected_at"],
-                p["vid"],
-                p["tmstmp"],
-                p["route"],
-                p.get("direction"),
-                p.get("destination"),
-                p["lat"],
-                p["lon"],
-                p.get("heading"),
-                p.get("speed"),
-                p.get("pdist"),
-                p.get("pattern_id"),
-                p.get("delayed", False),
-            ])
+        ROWS_PER_BATCH = 7  # 7 × 13 columns = 91 params (under D1's 100 limit)
 
-        sql = (
-            "INSERT INTO vehicle_positions "
-            "(collected_at, vid, tmstmp, route, direction, destination, "
-            "lat, lon, heading, speed, pdist, pattern_id, delayed) "
-            f"VALUES {', '.join(placeholders)}"
-        )
-        self.execute(sql, params)
+        for i in range(0, len(positions), ROWS_PER_BATCH):
+            chunk = positions[i : i + ROWS_PER_BATCH]
+            placeholders = []
+            params = []
+            for p in chunk:
+                placeholders.append("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                params.extend([
+                    p["collected_at"],
+                    p["vid"],
+                    p["tmstmp"],
+                    p["route"],
+                    p.get("direction"),
+                    p.get("destination"),
+                    p["lat"],
+                    p["lon"],
+                    p.get("heading"),
+                    p.get("speed"),
+                    p.get("pdist"),
+                    p.get("pattern_id"),
+                    p.get("delayed", False),
+                ])
+
+            sql = (
+                "INSERT INTO vehicle_positions "
+                "(collected_at, vid, tmstmp, route, direction, destination, "
+                "lat, lon, heading, speed, pdist, pattern_id, delayed) "
+                f"VALUES {', '.join(placeholders)}"
+            )
+            self.execute(sql, params)
+
         return len(positions)
 
     def query_vehicle_positions_by_route(self, route: str) -> list[dict]:
