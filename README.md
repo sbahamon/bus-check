@@ -37,7 +37,7 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync                    # install dependencies
-uv run pytest              # run tests (129 passing)
+uv run pytest              # run tests (149 passing)
 uv pip install -e .        # required before running notebooks
 uv run --no-sync jupyter lab  # open notebooks
 ```
@@ -56,11 +56,11 @@ Then start the collector:
 
 ## Reproducing the Analysis
 
-Every finding on the [project website](https://steffanybahamon.github.io/bus-check/) can be independently verified by running the 8 analysis notebooks. See [`REPRODUCING.md`](REPRODUCING.md) for detailed step-by-step instructions.
+Every finding on the [project website](https://sbahamon.github.io/bus-check/) can be independently verified by running the 8 analysis notebooks. See [`REPRODUCING.md`](REPRODUCING.md) for detailed step-by-step instructions.
 
 **Using an AI coding assistant?** `REPRODUCING.md` is written to be machine-readable — point your AI tool at it and it can walk through the entire reproduction process.
 
-**Website:** The [reproducibility page](https://steffanybahamon.github.io/bus-check/reproducibility.html) has the same guide in a more readable format.
+**Website:** The [reproducibility page](https://sbahamon.github.io/bus-check/reproducibility.html) has the same guide in a more readable format.
 
 ## Data Sources
 
@@ -77,5 +77,5 @@ src/bus_check/
   analysis/          # Statistical models (ridership DiD, headway metrics)
   collector/         # Real-time Bus Tracker polling pipeline
 notebooks/           # Jupyter notebooks (all executed with outputs)
-tests/               # 129 tests — pytest with HTTP mocking via responses
+tests/               # 149 tests — pytest with HTTP mocking via responses
 ```

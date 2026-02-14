@@ -1,6 +1,6 @@
 # Reproducing the Bus-Check Analysis
 
-Instructions for AI coding assistants (Claude Code, Cursor, Copilot, etc.) to verify every finding in this project. Human-readable version: [site/reproducibility.html](https://steffanybahamon.github.io/bus-check/reproducibility.html).
+Instructions for AI coding assistants (Claude Code, Cursor, Copilot, etc.) to verify every finding in this project. Human-readable version: [site/reproducibility.html](https://sbahamon.github.io/bus-check/reproducibility.html).
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ uv pip install -e .
 ## Running Tests
 
 ```bash
-uv run pytest          # all 129 tests should pass
+uv run pytest          # all 149 tests should pass
 uv run pytest -v       # verbose output
 ```
 
@@ -94,7 +94,7 @@ src/bus_check/
   analysis/          # Statistical models (ridership_analysis.py, headway_analysis.py)
   collector/         # Real-time Bus Tracker polling
 notebooks/           # 8 analysis notebooks
-tests/               # 129 tests (pytest + responses HTTP mocking)
+tests/               # 149 tests (pytest + responses HTTP mocking)
 site/                # Static website (GitHub Pages)
 ```
 
