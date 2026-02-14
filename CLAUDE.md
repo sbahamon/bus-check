@@ -58,4 +58,4 @@ Analyzes CTA Frequent Network bus routes to determine:
 
 ## Reproducing results
 See `REPRODUCING.md` for step-by-step instructions to verify all findings.
-Run `uv run pytest` (149 tests) and execute all 8 notebooks to confirm.
+Run `uv run pytest` (155 tests) and execute all 8 notebooks to confirm.

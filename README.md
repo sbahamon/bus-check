@@ -77,5 +77,5 @@ src/bus_check/
   analysis/          # Statistical models (ridership DiD, headway metrics)
   collector/         # Real-time Bus Tracker polling pipeline
 notebooks/           # Jupyter notebooks (all executed with outputs)
-tests/               # 149 tests — pytest with HTTP mocking via responses
+tests/               # 155 tests — pytest with HTTP mocking via responses
 ```

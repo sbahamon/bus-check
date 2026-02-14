@@ -7,12 +7,14 @@ Requires environment variables:
     CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, D1_DATABASE_ID
 """
 
+import math
 import os
 import re
 import sys
 from datetime import datetime
 
 import pandas as pd
+from dateutil.parser import parse as parse_dt
 
 from bus_check.config import ALL_FREQUENT_ROUTES, get_phase_for_route
 from bus_check.analysis.headway_analysis import (
@@ -135,8 +137,95 @@ def build_headway_data_js(data: list[dict]) -> str:
     return "const HEADWAY_DATA = [\n" + ",\n".join(lines) + ",\n];"
 
 
-def update_headways_html(html_path: str, new_data_js: str) -> None:
-    """Replace the HEADWAY_DATA block in headways.html."""
+def build_collection_stats(summary: dict) -> dict:
+    """Compute human-readable collection stats from D1 summary."""
+    first = parse_dt(summary["first_poll"])
+    last = parse_dt(summary["last_poll"])
+    total_hours = math.floor((last - first).total_seconds() / 3600)
+
+    # Format date range: "Feb 14&ndash;Mar 1, 2026" or "Feb 14&ndash;21, 2026"
+    if first.month == last.month and first.year == last.year:
+        date_range = (
+            f"{first.strftime('%b %-d')}&ndash;{last.strftime('%-d')}, "
+            f"{last.strftime('%Y')}"
+        )
+    else:
+        date_range = (
+            f"{first.strftime('%b %-d')}&ndash;{last.strftime('%b %-d')}, "
+            f"{last.strftime('%Y')}"
+        )
+
+    TWO_WEEKS_HOURS = 336  # 14 days × 24 hours
+    return {
+        "total_hours": total_hours,
+        "total_positions": summary.get("total_positions", 0),
+        "date_range": date_range,
+        "is_preliminary": total_hours < TWO_WEEKS_HOURS,
+    }
+
+
+def update_prose(content: str, stats: dict) -> str:
+    """Replace hardcoded collection stats in HTML with current values."""
+    hours = stats["total_hours"]
+    date_range = stats["date_range"]
+
+    # Replace "approximately <strong>N hours</strong> across DATE"
+    content = re.sub(
+        r"approximately <strong>\d+ hours</strong> across [^<]+",
+        f"approximately <strong>{hours} hours</strong> of automated collection "
+        f"({date_range})",
+        content,
+    )
+
+    # Replace "N hours of data across ..."
+    content = re.sub(
+        r"\d+ hours of data across [^.]+",
+        f"{hours} hours of data collected ({date_range})",
+        content,
+    )
+
+    # Replace "~N hours collected (DATE)" in footer
+    content = re.sub(
+        r"~\d+ hours collected \([^)]+\)",
+        f"~{hours} hours collected ({date_range})",
+        content,
+    )
+
+    # Replace "Only ~N hours" in methodology
+    content = re.sub(
+        r"Only ~\d+ hours of real-time collection",
+        f"~{hours} hours of real-time collection",
+        content,
+    )
+
+    # Update the preliminary caveat based on data volume
+    if not stats["is_preliminary"]:
+        # Replace warning callout with info callout
+        content = re.sub(
+            r'<div class="callout-warning">\s*<p><strong>Preliminary data\.</strong>[^<]*</p>\s*</div>',
+            f'<div class="callout-info">\n'
+            f'      <p><strong>Continuously updated.</strong> These results are based on '
+            f'{hours} hours of automated real-time data collection '
+            f'({date_range}). Data is collected every 30 minutes and '
+            f'this page updates daily.</p>\n'
+            f'    </div>',
+            content,
+        )
+    else:
+        # Keep warning but update the numbers
+        content = re.sub(
+            r'(<div class="callout-warning">\s*<p><strong>Preliminary data\.</strong>) These results are based on approximately \d+ hours of real-time data collection across [^.]+\.',
+            rf'\1 These results are based on approximately {hours} hours of real-time data collection ({date_range}).',
+            content,
+        )
+
+    return content
+
+
+def update_headways_html(
+    html_path: str, new_data_js: str, stats: dict | None = None
+) -> None:
+    """Replace the HEADWAY_DATA block and prose in headways.html."""
     with open(html_path, "r") as f:
         content = f.read()
 
@@ -153,6 +242,10 @@ def update_headways_html(html_path: str, new_data_js: str) -> None:
         f"Last updated {month_year}",
         new_content,
     )
+
+    # Update prose (hours, dates, caveats) if stats provided
+    if stats:
+        new_content = update_prose(new_content, stats)
 
     with open(html_path, "w") as f:
         f.write(new_content)
@@ -181,13 +274,34 @@ def main() -> int:
     avg_observed = sum(d["observed"] for d in data) / len(data)
     print(f"\n{len(data)} routes analyzed. Average: {avg_observed:.1f}% <= 10 min")
 
+    # Compute collection stats for prose updates
+    stats = build_collection_stats(summary)
+    print(f"Collection: {stats['total_hours']} hours, {stats['date_range']}, "
+          f"preliminary={stats['is_preliminary']}")
+
     # Update headways.html
     site_dir = os.path.join(os.path.dirname(__file__), "..", "site")
     html_path = os.path.normpath(os.path.join(site_dir, "headways.html"))
 
     new_js = build_headway_data_js(data)
-    update_headways_html(html_path, new_js)
-    print(f"\nUpdated {html_path}")
+    update_headways_html(html_path, new_js, stats)
+    print(f"Updated {html_path}")
+
+    # Update methodology.html prose (hours/dates only, no HEADWAY_DATA)
+    meth_path = os.path.normpath(os.path.join(site_dir, "methodology.html"))
+    if os.path.exists(meth_path):
+        with open(meth_path, "r") as f:
+            meth_content = f.read()
+        meth_content = update_prose(meth_content, stats)
+        month_year = datetime.now().strftime("%B %Y")
+        meth_content = re.sub(
+            r"Last updated \w+ \d{4}",
+            f"Last updated {month_year}",
+            meth_content,
+        )
+        with open(meth_path, "w") as f:
+            f.write(meth_content)
+        print(f"Updated {meth_path}")
 
     return 0
 

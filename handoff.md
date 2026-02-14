@@ -65,7 +65,7 @@ bus-check/
     07_did_staggered.ipynb          # Callaway-Sant'Anna staggered DiD (EXECUTED)
     08_did_regression.ipynb         # Regression DiD with route+time FE, clustered SEs (EXECUTED)
 
-  tests/                 # 149 tests, all passing
+  tests/                 # 155 tests, all passing
     conftest.py          # Shared fixtures
     fixtures/            # Sample JSON + GTFS files for mocking
     test_config.py (21), test_db.py (7), test_ridership.py (21),
@@ -133,7 +133,7 @@ Three fixes from audit feedback (not yet committed):
 
 ## Useful commands
 ```bash
-uv run pytest -v                    # run all 149 tests (129 core + 20 D1/automation)
+uv run pytest -v                    # run all 155 tests (129 core + 20 D1/automation)
 uv pip install -e . && uv run --no-sync jupyter lab  # interactive notebooks
 uv pip install -e . && uv run --no-sync jupyter execute notebooks/<NB>.ipynb --inplace  # execute a notebook
 
