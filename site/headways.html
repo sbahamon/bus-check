@@ -39,7 +39,7 @@
 <section>
   <div class="container">
     <div class="callout-warning">
-      <p><strong>Preliminary data.</strong> These results are based on approximately 99 hours of real-time data collection (Feb 11&ndash;16, 2026). Collection runs every 5 minutes via a Cloudflare Worker and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
+      <p><strong>Preliminary data.</strong> These results are based on approximately 125 hours of real-time data collection (Feb 11&ndash;17, 2026). Collection runs every 5 minutes via a Cloudflare Worker and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
     </div>
 
     <h2>Schedule vs. Reality</h2>
@@ -74,7 +74,7 @@
     <p>Both scheduled and observed headways are filtered to these windows for comparison.</p>
 
     <h3>Data collection</h3>
-    <p>Vehicle positions are collected automatically every 5 minutes via a Cloudflare Worker and stored in Cloudflare D1. This page updates daily with the latest analysis. Currently approximately <strong>99 hours</strong> of real-time collection (Feb 11&ndash;16, 2026).</p>
+    <p>Vehicle positions are collected automatically every 5 minutes via a Cloudflare Worker and stored in Cloudflare D1. This page updates daily with the latest analysis. Currently approximately <strong>125 hours</strong> of real-time collection (Feb 11&ndash;17, 2026).</p>
     <p><strong>Note on collection frequency:</strong> Data was initially collected every 60 seconds (Feb 11&ndash;13), then every 30 minutes (Feb 14&ndash;16), then every 5 minutes (Feb 16 onward). The dense initial data dominates current headway estimates. The 30-minute gap period contributed very few usable observations because the headway detection algorithm requires frequent snapshots to track individual buses crossing reference stops. Results will increasingly reflect the 5-minute polling period as data accumulates.</p>
   </div>
 </section>
@@ -98,7 +98,7 @@
       <div>
         <dl class="footer-sources">
           <dt>Real-time positions</dt>
-          <dd>CTA Bus Tracker API &middot; ~99 hours collected (Feb 11&ndash;16, 2026) &middot; Updated daily</dd>
+          <dd>CTA Bus Tracker API &middot; ~125 hours collected (Feb 11&ndash;17, 2026) &middot; Updated daily</dd>
           <dt>Schedules</dt>
           <dd>CTA GTFS static feed</dd>
         </dl>
@@ -116,24 +116,24 @@
 const PHASE_COLORS = {1:'#0066CC', 2:'#2A9D4E', 3:'#E67E22', 4:'#C0392B'};
 
 const HEADWAY_DATA = [
+  {route:'72', name:'North', phase:4, scheduled:100, observed:75},
   {route:'79', name:'79th', phase:1, scheduled:100, observed:74},
-  {route:'72', name:'North', phase:4, scheduled:100, observed:74},
   {route:'53', name:'Pulaski', phase:3, scheduled:100, observed:71},
-  {route:'54', name:'Cicero', phase:1, scheduled:100, observed:66},
-  {route:'82', name:'Kimball/Homan', phase:3, scheduled:100, observed:66},
   {route:'77', name:'Belmont', phase:3, scheduled:100, observed:65},
   {route:'66', name:'Chicago', phase:2, scheduled:100, observed:64},
-  {route:'49', name:'Western', phase:2, scheduled:100, observed:61},
+  {route:'54', name:'Cicero', phase:1, scheduled:100, observed:63},
+  {route:'82', name:'Kimball/Homan', phase:3, scheduled:100, observed:63},
   {route:'4', name:'Cottage Grove', phase:2, scheduled:100, observed:59},
+  {route:'49', name:'Western', phase:2, scheduled:100, observed:59},
   {route:'63', name:'63rd', phase:1, scheduled:100, observed:57},
-  {route:'95', name:'95th', phase:1, scheduled:100, observed:57},
-  {route:'81', name:'Lawrence', phase:4, scheduled:100, observed:53},
+  {route:'95', name:'95th', phase:1, scheduled:100, observed:53},
   {route:'12', name:'Roosevelt', phase:4, scheduled:100, observed:52},
+  {route:'81', name:'Lawrence', phase:4, scheduled:100, observed:51},
   {route:'60', name:'Blue Island/26th', phase:1, scheduled:100, observed:49},
   {route:'55', name:'Garfield', phase:3, scheduled:100, observed:49},
-  {route:'20', name:'Madison', phase:2, scheduled:100, observed:47},
   {route:'34', name:'South Michigan', phase:1, scheduled:100, observed:46},
   {route:'J14', name:'Jeffery Jump', phase:1, scheduled:100, observed:45},
+  {route:'20', name:'Madison', phase:2, scheduled:100, observed:45},
   {route:'9', name:'Ashland', phase:4, scheduled:100, observed:33},
 ];
 
