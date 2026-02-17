@@ -13,7 +13,7 @@ Analyzes CTA Frequent Network bus routes to determine:
 
 ## Key commands
 - `uv sync` — install all deps
-- `uv run pytest` — run all tests (148 passing)
+- `uv run pytest` — run all tests (163 passing)
 - `uv run pytest tests/test_ridership.py -v` — run specific test file
 - `uv run python -m bus_check.collector.headway_collector` — run headway collector
 - `uv pip install -e . && uv run --no-sync jupyter lab` — open notebooks
@@ -46,10 +46,12 @@ Analyzes CTA Frequent Network bus routes to determine:
 - GitHub Actions secrets: CTA_API_KEY, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, D1_DATABASE_ID
 
 ## Headway collection (Cloudflare Worker)
-The headway detection algorithm (`detect_stop_arrivals`) tracks individual vehicles crossing
-reference stops, which requires frequent polling. The original GitHub Actions collector polled
-every 30 minutes — far too infrequent (missed ~98% of bus arrivals). A Cloudflare Worker now
-polls every 5 minutes via cron trigger, writing directly to D1 via native binding.
+The headway detection algorithm (`detect_stop_arrivals`) uses crossing+interpolation: it detects
+when each vehicle's `pdist` crosses a reference point between consecutive observations and
+linearly interpolates the arrival time. A 30-minute minimum gap between same-vehicle arrivals
+prevents false duplicates from GPS jitter.
+
+A Cloudflare Worker polls every 5 minutes via cron trigger, writing directly to D1 via native binding.
 
 - `worker/src/index.js` — single-file Worker source
 - `worker/wrangler.toml` — config with cron trigger + D1 binding
@@ -59,9 +61,9 @@ polls every 5 minutes via cron trigger, writing directly to D1 via native bindin
 - CTA_API_KEY stored as Worker secret (set via Cloudflare dashboard)
 - D1 database: `bus-check-headways` (ID: `cfaca7b6-4312-4d15-b861-18851989403d`)
 
-**Data collection history:** 60s local polling Feb 11-13 (dense, high quality) → 30min GHA
-polling Feb 14-16 (sparse, nearly useless for headways) → 5min Worker polling Feb 16+.
-See `handoff.md` Known Issue #3 for cleanup details on the sparse gap data.
+**Data:** D1 contains only Worker-era data (5-min polling, Feb 16, 2026 onward). Earlier
+prototype data (60s local, 30min GHA) was cleaned out on Feb 17, 2026. The 60s data is
+preserved locally in `data/headway.db` for algorithm validation (see `scripts/validate_algorithm.py`).
 
 ## Automated analysis (GitHub Actions)
 - `.github/workflows/update-headways.yml` — daily: reads D1, updates site/headways.html, deploys to Pages
@@ -76,4 +78,4 @@ See `handoff.md` Known Issue #3 for cleanup details on the sparse gap data.
 
 ## Reproducing results
 See `REPRODUCING.md` for step-by-step instructions to verify all findings.
-Run `uv run pytest` (159 tests) and execute all 8 notebooks to confirm.
+Run `uv run pytest` (163 tests) and execute all 8 notebooks to confirm.

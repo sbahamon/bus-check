@@ -43,7 +43,7 @@
     </div>
 
     <h2>Schedule vs. Reality</h2>
-    <p class="section-lead">CTA schedules 97&ndash;100% of Frequent Network headways at 10 minutes or less. In our observations, only about 59% of headways actually met that promise (filtered to the service window). The gap between what's planned and what riders experience is significant across nearly every route.</p>
+    <p class="section-lead">CTA schedules 97&ndash;100% of Frequent Network headways at 10 minutes or less. This page tracks how often buses actually arrive within that promise, based on real-time vehicle positions collected every 5 minutes. Results update daily.</p>
 
     <div class="phase-legend">
       <span class="phase-pill"><span class="phase-dot" style="background:var(--phase-1)"></span>Phase 1</span>
@@ -60,7 +60,7 @@
 <section>
   <div class="container prose">
     <h2>How We Measured</h2>
-    <p>We poll CTA's Bus Tracker API for real-time vehicle positions on all 20 Frequent Network routes. Stop arrivals are detected when a vehicle comes within 30 meters of a reference stop (selected at the midpoint of each route). Headways are computed as the time between consecutive arrivals at the same stop traveling in the same direction.</p>
+    <p>We poll CTA's Bus Tracker API for real-time vehicle positions on all 20 Frequent Network routes. Stop arrivals are detected using a crossing+interpolation algorithm: when a vehicle's distance along route (<code>pdist</code>) crosses a reference point (selected at the midpoint of each route), the exact arrival time is linearly interpolated between the two bounding observations. Headways are computed as the time between consecutive arrivals at the same reference point traveling in the same direction.</p>
 
     <h3>Scheduled headways</h3>
     <p>Scheduled headways come from the CTA's GTFS static feed, which provides planned stop times for each trip. We computed the time between consecutive scheduled arrivals at the same reference stop and filtered to the Frequent Network service window.</p>
@@ -74,8 +74,7 @@
     <p>Both scheduled and observed headways are filtered to these windows for comparison.</p>
 
     <h3>Data collection</h3>
-    <p>Vehicle positions are collected automatically every 5 minutes via a Cloudflare Worker and stored in Cloudflare D1. This page updates daily with the latest analysis. Currently approximately <strong>125 hours</strong> of real-time collection (Feb 11&ndash;17, 2026).</p>
-    <p><strong>Note on collection frequency:</strong> Data was initially collected every 60 seconds (Feb 11&ndash;13), then every 30 minutes (Feb 14&ndash;16), then every 5 minutes (Feb 16 onward). The dense initial data dominates current headway estimates. The 30-minute gap period contributed very few usable observations because the headway detection algorithm requires frequent snapshots to track individual buses crossing reference stops. Results will increasingly reflect the 5-minute polling period as data accumulates.</p>
+    <p>Vehicle positions are collected automatically every 5 minutes via a Cloudflare Worker and stored in Cloudflare D1. This page updates daily with the latest analysis. Data collection began February 16, 2026.</p>
   </div>
 </section>
 
@@ -86,7 +85,7 @@
     <ul>
       <li><strong>Growing dataset.</strong> Data is collected automatically every 5 minutes during service hours via a Cloudflare Worker and accumulates over time. Earlier results may be based on limited samples. At minimum, two weeks of continuous data across weekdays and weekends are needed for robust conclusions.</li>
       <li><strong>Reference stop selection.</strong> We use a single reference stop per route (the midpoint). Headway performance may vary at different points along a route &mdash; buses can bunch or spread out as they travel.</li>
-      <li><strong>Arrival detection.</strong> The 30-meter proximity threshold for detecting arrivals may occasionally miss stops or double-count vehicles that linger near a stop.</li>
+      <li><strong>Arrival detection.</strong> The crossing+interpolation algorithm detects arrivals when a vehicle's distance along route crosses a reference point between consecutive 5-minute observations. A 30-minute minimum gap prevents false duplicates from GPS jitter, but may occasionally merge closely-spaced legitimate arrivals.</li>
     </ul>
   </div>
 </section>

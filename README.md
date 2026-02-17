@@ -16,7 +16,7 @@ This project analyzes Chicago's 20 Frequent Network bus routes using ridership d
 
 13 of 16 Phase 1-3 routes gained riders year-over-year. J14 Jeffery Jump led with +26.1%.
 
-**Headways fall short of the promise.** All 20 routes schedule 97-100% of headways at 10 minutes or less. In practice, only about 59% of observed headways meet that bar during service window hours (data collected continuously via GitHub Actions — see headway page for current hours).
+**Headways fall short of the promise.** All 20 routes schedule 97-100% of headways at 10 minutes or less. In practice, observed adherence falls well below that target during service window hours. Data is collected every 5 minutes via a Cloudflare Worker — see the [headway page](https://sbahamon.github.io/bus-check/headways.html) for current results.
 
 ## Notebooks
 
@@ -37,7 +37,7 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync                    # install dependencies
-uv run pytest              # run tests (149 passing)
+uv run pytest              # run tests (163 passing)
 uv pip install -e .        # required before running notebooks
 uv run --no-sync jupyter lab  # open notebooks
 ```
@@ -77,5 +77,5 @@ src/bus_check/
   analysis/          # Statistical models (ridership DiD, headway metrics)
   collector/         # Real-time Bus Tracker polling pipeline
 notebooks/           # Jupyter notebooks (all executed with outputs)
-tests/               # 159 tests — pytest with HTTP mocking via responses
+tests/               # 163 tests — pytest with HTTP mocking via responses
 ```

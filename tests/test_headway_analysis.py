@@ -118,31 +118,30 @@ def test_uniform_headways_zero_ewt():
 
 
 def test_detect_stop_arrivals_basic():
-    """Detect when vehicles cross a reference pdist."""
-    # Vehicle 100: approaches from far, crosses pdist=5000
-    # Vehicle 200: approaches from far, crosses pdist=5000
+    """Detect when vehicles cross a reference pdist, with interpolated times."""
+    # Vehicle 100: pdist crosses 5000 between obs at 4800 (08:01) and 5050 (08:02)
+    # Vehicle 200: pdist crosses 5000 between obs at 4950 (08:11) and 5200 (08:12)
     positions = pd.DataFrame(
         {
             "vid": ["100", "100", "100", "100", "200", "200", "200"],
-            "tmstmp": [
-                "20250401 08:00",
-                "20250401 08:01",
-                "20250401 08:02",
-                "20250401 08:03",
-                "20250401 08:10",
-                "20250401 08:11",
-                "20250401 08:12",
-            ],
+            "tmstmp": pd.to_datetime([
+                "2025-04-01 08:00",
+                "2025-04-01 08:01",
+                "2025-04-01 08:02",
+                "2025-04-01 08:03",
+                "2025-04-01 08:10",
+                "2025-04-01 08:11",
+                "2025-04-01 08:12",
+            ]),
             "pdist": [4000, 4800, 5050, 6000, 4500, 4950, 5200],
             "rt": ["79"] * 7,
         }
     )
-    arrivals = detect_stop_arrivals(positions, reference_pdist=5000, tolerance_feet=200)
+    arrivals = detect_stop_arrivals(positions, reference_pdist=5000)
     assert isinstance(arrivals, pd.DataFrame)
     assert "vid" in arrivals.columns
     assert "arrival_time" in arrivals.columns
     assert "pdist_at_arrival" in arrivals.columns
-    # Should detect exactly 2 arrivals (one per vehicle)
     assert len(arrivals) == 2
     assert set(arrivals["vid"].tolist()) == {"100", "200"}
 
@@ -152,27 +151,113 @@ def test_detect_stop_arrivals_no_crossing():
     positions = pd.DataFrame(
         {
             "vid": ["100", "100", "100"],
-            "tmstmp": ["20250401 08:00", "20250401 08:01", "20250401 08:02"],
+            "tmstmp": pd.to_datetime([
+                "2025-04-01 08:00", "2025-04-01 08:01", "2025-04-01 08:02",
+            ]),
             "pdist": [1000, 2000, 3000],
             "rt": ["79"] * 3,
         }
     )
-    arrivals = detect_stop_arrivals(positions, reference_pdist=10000, tolerance_feet=200)
+    arrivals = detect_stop_arrivals(positions, reference_pdist=10000)
     assert len(arrivals) == 0
 
 
-def test_detect_stop_arrivals_respects_tolerance():
-    """Only detect arrivals within the tolerance window."""
+def test_detect_stop_arrivals_interpolation_accuracy():
+    """Arrival time is linearly interpolated between the two bounding observations."""
+    # pdist goes from 4000 to 6000 over 10 minutes, reference=5000
+    # fraction = (5000-4000)/(6000-4000) = 0.5 → arrival at midpoint (08:05)
     positions = pd.DataFrame(
         {
             "vid": ["100", "100"],
-            "tmstmp": ["20250401 08:00", "20250401 08:01"],
-            "pdist": [4000, 5150],  # 5150 is within 200 of 5000
+            "tmstmp": pd.to_datetime([
+                "2025-04-01 08:00", "2025-04-01 08:10",
+            ]),
+            "pdist": [4000, 6000],
             "rt": ["79"] * 2,
         }
     )
-    arrivals = detect_stop_arrivals(positions, reference_pdist=5000, tolerance_feet=200)
+    arrivals = detect_stop_arrivals(positions, reference_pdist=5000)
     assert len(arrivals) == 1
+    expected_time = pd.Timestamp("2025-04-01 08:05")
+    assert arrivals["arrival_time"].iloc[0] == expected_time
+    assert arrivals["pdist_at_arrival"].iloc[0] == 5000
+
+
+def test_detect_stop_arrivals_interpolation_asymmetric():
+    """Interpolation works correctly when the crossing is not at the midpoint."""
+    # pdist 2000 → 10000, reference=4000 → fraction = 2000/8000 = 0.25
+    # 10 minutes * 0.25 = 2.5 minutes after 08:00 → 08:02:30
+    positions = pd.DataFrame(
+        {
+            "vid": ["100", "100"],
+            "tmstmp": pd.to_datetime([
+                "2025-04-01 08:00", "2025-04-01 08:10",
+            ]),
+            "pdist": [2000, 10000],
+            "rt": ["79"] * 2,
+        }
+    )
+    arrivals = detect_stop_arrivals(positions, reference_pdist=4000)
+    assert len(arrivals) == 1
+    expected_time = pd.Timestamp("2025-04-01 08:02:30")
+    assert arrivals["arrival_time"].iloc[0] == expected_time
+
+
+def test_detect_stop_arrivals_multiple_trips():
+    """Same vehicle crosses reference twice (two separate trips with pdist reset)."""
+    positions = pd.DataFrame(
+        {
+            "vid": ["100"] * 6,
+            "tmstmp": pd.to_datetime([
+                "2025-04-01 08:00",  # trip 1: approaching
+                "2025-04-01 08:10",  # trip 1: crossed reference
+                "2025-04-01 08:20",  # trip 1: past reference
+                "2025-04-01 10:00",  # trip 2: pdist reset, approaching again
+                "2025-04-01 10:05",  # trip 2: still approaching
+                "2025-04-01 10:10",  # trip 2: crossed reference
+            ]),
+            "pdist": [3000, 7000, 9000, 1000, 4000, 6000],
+            "rt": ["79"] * 6,
+        }
+    )
+    arrivals = detect_stop_arrivals(positions, reference_pdist=5000)
+    assert len(arrivals) == 2
+    assert all(arrivals["vid"] == "100")
+    # First crossing: (3000→7000), fraction=0.5, time=08:05
+    assert arrivals["arrival_time"].iloc[0] == pd.Timestamp("2025-04-01 08:05")
+    # Second crossing: (4000→6000), fraction=0.5, time=10:07:30
+    assert arrivals["arrival_time"].iloc[1] == pd.Timestamp("2025-04-01 10:07:30")
+
+
+def test_detect_stop_arrivals_jitter_no_false_double():
+    """Pdist jitter near reference doesn't produce false duplicate arrivals."""
+    # Bus oscillates near reference=30000 within a short time window.
+    # Only the first crossing should count; subsequent crossings within
+    # 30 minutes of the same vehicle are suppressed.
+    positions = pd.DataFrame(
+        {
+            "vid": ["100"] * 4,
+            "tmstmp": pd.to_datetime([
+                "2025-04-01 08:00",
+                "2025-04-01 08:05",
+                "2025-04-01 08:10",
+                "2025-04-01 08:15",
+            ]),
+            "pdist": [29800, 30200, 29900, 30100],
+            "rt": ["79"] * 4,
+        }
+    )
+    arrivals = detect_stop_arrivals(positions, reference_pdist=30000)
+    # Only the first crossing (29800→30200) should be detected
+    assert len(arrivals) == 1
+
+
+def test_detect_stop_arrivals_empty_input():
+    """Empty positions DataFrame returns empty arrivals."""
+    positions = pd.DataFrame(columns=["vid", "tmstmp", "pdist", "rt"])
+    arrivals = detect_stop_arrivals(positions, reference_pdist=5000)
+    assert len(arrivals) == 0
+    assert list(arrivals.columns) == ["vid", "arrival_time", "pdist_at_arrival"]
 
 
 # --- compute_headways_from_arrivals ---

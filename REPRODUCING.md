@@ -26,7 +26,7 @@ uv pip install -e .
 ## Running Tests
 
 ```bash
-uv run pytest          # all 159 tests should pass
+uv run pytest          # all 163 tests should pass
 uv run pytest -v       # verbose output
 ```
 
@@ -94,7 +94,7 @@ src/bus_check/
   analysis/          # Statistical models (ridership_analysis.py, headway_analysis.py)
   collector/         # Local Bus Tracker polling (writes to SQLite)
 notebooks/           # 8 analysis notebooks
-tests/               # 159 tests (pytest + responses HTTP mocking)
+tests/               # 163 tests (pytest + responses HTTP mocking)
 site/                # Static website (GitHub Pages)
 worker/              # Cloudflare Worker: polls CTA every 5 min → D1 (live data collection)
 ```

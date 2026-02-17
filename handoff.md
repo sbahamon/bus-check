@@ -9,8 +9,8 @@ Inspired by a Bluesky post from @laurie-merrell asking exactly these questions (
 
 ## Tech stack
 - Python 3.11+, managed with **uv** (never system Python)
-- `uv run pytest` for tests (149 passing), `uv run jupyter lab` for notebooks
-- SQLite for data cache
+- `uv run pytest` for tests (163 passing), `uv run jupyter lab` for notebooks
+- SQLite for local data cache, Cloudflare D1 for cloud headway collection
 - Package installed in editable mode: `uv pip install -e .` then `uv run --no-sync` (MUST use `--no-sync` or `uv run` re-syncs and drops the editable install, causing `ModuleNotFoundError`)
 
 ## Data collection: Cloudflare Worker
@@ -55,6 +55,7 @@ bus-check/
       bus_tracker.py     # CTA Bus Tracker API client (BusTrackerClient class)
       gtfs.py            # GTFS parser for scheduled headways
       db.py              # SQLite schema (ridership, vehicle_positions, stop_arrivals, reference_stops)
+      d1_client.py       # Cloudflare D1 REST API client (used by update_headways.py)
     analysis/
       ridership_analysis.py  # compute_yoy_change, select_control_routes, prepare_did_data
       headway_analysis.py    # compute_headway_metrics, detect_stop_arrivals, compute_headways_from_arrivals
@@ -64,7 +65,7 @@ bus-check/
 
   notebooks/
     01_ridership_exploration.ipynb  # Full 20-route YoY + pooled DiD (EXECUTED)
-    02_headway_exploration.ipynb    # GTFS scheduled + observed headways (EXECUTED, ~17h data)
+    02_headway_exploration.ipynb    # GTFS scheduled + observed headways (EXECUTED)
     03_ridership_phases_1_3.ipynb   # Phases 1-3 only, no Phase 4 (EXECUTED)
     04_ridership_without_79.ipynb   # Sensitivity: all routes minus #79 outlier (EXECUTED)
     05_ridership_share.ipynb        # FN share of total CTA ridership over time (EXECUTED)
@@ -72,12 +73,12 @@ bus-check/
     07_did_staggered.ipynb          # Callaway-Sant'Anna staggered DiD (EXECUTED)
     08_did_regression.ipynb         # Regression DiD with route+time FE, clustered SEs (EXECUTED)
 
-  tests/                 # 159 tests, all passing
+  tests/                 # 163 tests, all passing
     conftest.py          # Shared fixtures
     fixtures/            # Sample JSON + GTFS files for mocking
     test_config.py (21), test_db.py (7), test_ridership.py (21),
     test_ridership_analysis.py (31), test_bus_tracker.py (11),
-    test_gtfs.py (9), test_headway_analysis.py (25), test_headway_collector.py (6),
+    test_gtfs.py (9), test_headway_analysis.py (29), test_headway_collector.py (6),
     test_d1_client.py (10), test_collect_to_d1.py (5), test_update_headways.py (15)
 
   site/                  # Static website (GitHub Pages)
@@ -88,13 +89,18 @@ bus-check/
     style.css            # Shared styles
     routes.geojson       # Route geometry for map
 
+  scripts/               # Automation scripts
+    collect_to_d1.py     # Manual D1 collection (emergency fallback)
+    update_headways.py   # Daily: read D1 → update site/headways.html
+    validate_algorithm.py # Validate crossing algorithm vs downsampled Era 1
+
   worker/                # Cloudflare Worker (headway collector)
     wrangler.toml        # Worker config: cron trigger, D1 binding
     src/index.js         # Single-file Worker: poll CTA → D1
     package.json         # Minimal (wrangler dev dep only)
 
   data/                  # gitignored (/data/ in .gitignore)
-    headway.db           # Old local collector writes here
+    headway.db           # Era 1 local data (464K rows, 60s polling, for validation)
     gtfs/                # Downloaded GTFS feed
 ```
 
@@ -116,40 +122,18 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 
 ### Headway adherence (notebook 02, data collected continuously)
 - **Schedule promises it:** All 20 routes schedule 97-100% of headways <= 10 min
-- **Reality falls short:** Average ~59% of observed headways <= 10 min (filtered to service window)
-- **Caveat:** Data collected continuously via GitHub Actions. Need 2+ weeks for robust conclusions.
+- **Algorithm upgrade (Feb 17, 2026):** Switched from window-based detection to crossing+interpolation. Validated against downsampled 60s data: 94.9% arrival detection rate at 5-min polling, adherence metrics within 1.5 pp of ground truth.
+- **Caveat:** Data collected every 5 min via Cloudflare Worker. Need 2+ weeks for robust conclusions.
 
 ## Known issues
 
 1. **`uv pip install -e .` + `uv run --no-sync` required for notebook execution** — Always use: `uv pip install -e . && uv run --no-sync jupyter execute <notebook> --inplace`
 
-2. **Headway data is preliminary** — collected continuously via Cloudflare Worker + D1. Need 2+ weeks for robust conclusions.
+2. **Headway data is preliminary** — collected every 5 min via Cloudflare Worker + D1. Need 2+ weeks for robust conclusions.
 
-3. **Sparse data gap: Feb 14-16, 2026 (needs cleanup)**
+3. ~~**Sparse data gap: Feb 14-16, 2026**~~ — **RESOLVED (Feb 17, 2026).** All pre-Worker data (Eras 1 and 2) deleted from D1. D1 now contains only Worker-era data (5-min polling, Feb 16+). Era 1 data (60s local, 464K rows) preserved locally in `data/headway.db` for algorithm validation.
 
-   **What happened:** The local collector (60-second polling) stopped on Feb 13. From Feb 14-16, only the GitHub Actions collector ran (30-minute polling). This produced dramatically fewer useful data points:
-
-   | Period | Polls/day | Source | Headway detection quality |
-   |--------|-----------|--------|--------------------------|
-   | Feb 11-13 | 130-833 | Local collector (60s) | Excellent — catches most bus arrivals |
-   | Feb 14-16 | ~19 | GitHub Actions (30 min) | Very poor — misses ~98% of arrivals |
-   | Feb 16+ | ~180 | Cloudflare Worker (5 min) | Good — significant improvement |
-
-   **Why it matters:** The headway detection algorithm (`detect_stop_arrivals` in `headway_analysis.py`) tracks individual vehicles crossing reference stops. It needs to see a vehicle *before* and *at* the stop in consecutive snapshots. With 30-minute gaps, a bus traverses the entire route between polls, so most arrivals are never detected. The sparse Feb 14-16 data contributes very few detected arrivals but may introduce noise (artifically long observed headways from the sparse sampling).
-
-   **Impact on analysis:** Minimal right now — 96% of all data (464K of 483K rows) is from the dense Feb 11-13 period, so the sparse data barely moves the headway percentages. But as the Worker accumulates more 5-minute data, the Feb 14-16 gap will become a proportionally smaller (but still noisy) slice.
-
-   **Cleanup options (not yet done):**
-   ```sql
-   -- Option A: Delete the sparse data entirely
-   DELETE FROM vehicle_positions
-   WHERE collected_at >= '2026-02-14T00:00:00'
-     AND collected_at < '2026-02-16T20:00:00';  -- adjust to Worker start time
-
-   -- Option B: Leave it — the noise is minimal and will shrink over time
-   ```
-
-   **Recommendation:** Delete the sparse data once the Worker has accumulated several days of good 5-minute data, so the gap doesn't introduce noise into the growing dataset. Query D1 to find the exact cutoff: `SELECT MIN(collected_at) FROM vehicle_positions WHERE collected_at >= '2026-02-16' AND collected_at LIKE '%:00:%' OR collected_at LIKE '%:05:%'` (look for the first 5-min-interval poll from the Worker).
+4. **Algorithm upgrade (Feb 17, 2026):** `detect_stop_arrivals` switched from window-based detection (±500ft tolerance) to crossing+interpolation. The old algorithm had ~80% false negative rate at 5-min polling because buses "jumped over" the 1000ft detection window between polls. The new algorithm detects when `pdist` crosses the reference point between consecutive observations and linearly interpolates the arrival time. Validated: 94.9% arrival detection rate at 5-min vs 60s ground truth, adherence within 1.5 pp.
 
 ## Reproducibility
 - **For humans:** `site/reproducibility.html` — step-by-step guide on the project website
@@ -159,22 +143,34 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 
 ## Pending work
 - [ ] Let Worker collect for 2+ weeks for robust headway conclusions
-- [ ] Clean up sparse Feb 14-16 data from D1 (see Known Issue #3 above)
+- [x] ~~Clean up sparse Feb 14-16 data from D1~~ — Done Feb 17: Eras 1+2 deleted, D1 is Worker-only
 - [x] ~~Confirm exact Phase 2/3 launch dates from CTA press releases~~ — Done: Phase 2 = Jun 15, Phase 3 = Aug 17
 - [ ] Re-execute notebook 02 once more headway data is collected
-- [x] ~~Filter observed headways to service window hours~~ — Done: `filter_arrivals_to_service_window()` added to headway_analysis.py
-- [ ] Investigate Route 47 (no arrivals detected in headway analysis)
+- [x] ~~Filter observed headways to service window hours~~ — Done: `filter_arrivals_to_service_window()` added
+- [x] ~~Investigate Route 47 (no arrivals detected)~~ — Resolved by algorithm upgrade: crossing detection finds arrivals on all 20 routes
 - [x] ~~Replace GHA collector with Cloudflare Worker~~ — Done: `worker/` deployed, GHA cron disabled
+- [x] ~~Fix headway detection algorithm for 5-min polling~~ — Done Feb 17: crossing+interpolation replaces window-based detection
 
 ## Uncommitted changes
-Three fixes from audit feedback (not yet committed):
+Algorithm upgrade + data cleanup + documentation (Feb 17, 2026):
+- `src/bus_check/analysis/headway_analysis.py`: crossing+interpolation algorithm replaces window-based detection
+- `tests/test_headway_analysis.py`: 7 new tests for crossing algorithm (25 → 29 tests)
+- `scripts/update_headways.py`: removed `tolerance_feet` kwarg
+- `scripts/validate_algorithm.py`: NEW — downsampled validation script
+- `notebooks/02_headway_exploration.ipynb`: updated algorithm call + caveats
+- `site/headways.html`: updated algorithm description, collection info, limitations
+- `site/methodology.html`: updated data sources, notebook 02 summary, limitations
+- `CLAUDE.md`, `README.md`, `REPRODUCING.md`, `handoff.md`: updated test counts, algorithm/data descriptions
+- `prompts/`: NEW — LLM consultation files (data-cleanup-consultation.md + 3 response files)
+
+Previous audit fixes (also uncommitted):
 - `.gitignore`: `data/` → `/data/` (was excluding `src/bus_check/data/` from git)
 - `pyproject.toml`: added `python-dateutil>=2.8` as explicit dependency
 - `run_collector.sh`: replaced hardcoded absolute path with `cd "$(dirname "$0")"`
 
 ## Useful commands
 ```bash
-uv run pytest -v                    # run all 159 tests
+uv run pytest -v                    # run all 163 tests
 uv pip install -e . && uv run --no-sync jupyter lab  # interactive notebooks
 uv pip install -e . && uv run --no-sync jupyter execute notebooks/<NB>.ipynb --inplace  # execute a notebook
 

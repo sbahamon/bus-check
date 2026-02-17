@@ -40,49 +40,59 @@ def compute_headway_metrics(headways: pd.Series) -> dict:
 def detect_stop_arrivals(
     vehicle_positions: pd.DataFrame,
     reference_pdist: int,
-    tolerance_feet: int = 200,
+    min_gap_minutes: int = 30,
 ) -> pd.DataFrame:
-    """Detect when each vehicle crosses the reference stop pdist.
+    """Detect when each vehicle crosses the reference pdist using crossing logic.
 
-    For each vehicle in the position time series, finds the first position
-    where pdist falls within (reference_pdist - tolerance, reference_pdist + tolerance)
-    after having been below reference_pdist - tolerance.
+    For each vehicle, finds consecutive observation pairs where pdist transitions
+    from below the reference to at-or-above it. The arrival time is linearly
+    interpolated between the two bounding observations.
 
     Args:
-        vehicle_positions: DataFrame with vid, tmstmp, pdist, rt columns.
-        reference_pdist: The pdist value of the reference stop.
-        tolerance_feet: How close (in feet) a vehicle must be to count as arrived.
+        vehicle_positions: DataFrame with vid, tmstmp, pdist columns.
+        reference_pdist: The pdist value of the reference point.
+        min_gap_minutes: Minimum minutes between arrivals for the same vehicle
+            to prevent false duplicates from GPS jitter.
 
     Returns:
         DataFrame with vid, arrival_time, pdist_at_arrival columns.
     """
-    lower = reference_pdist - tolerance_feet
-    upper = reference_pdist + tolerance_feet
+    if vehicle_positions.empty:
+        return pd.DataFrame(columns=["vid", "arrival_time", "pdist_at_arrival"])
 
+    min_gap = pd.Timedelta(minutes=min_gap_minutes)
     arrivals = []
 
     for vid, group in vehicle_positions.groupby("vid"):
         group = group.sort_values("tmstmp").reset_index(drop=True)
+        last_arrival_time = None
 
-        # Track whether the vehicle was ever below the lower bound
-        was_before_stop = False
-        detected = False
+        for i in range(len(group) - 1):
+            prev = group.iloc[i]
+            curr = group.iloc[i + 1]
 
-        for _, row in group.iterrows():
-            pdist = row["pdist"]
+            if prev["pdist"] < reference_pdist and curr["pdist"] >= reference_pdist:
+                # Crossing detected — interpolate arrival time
+                denom = curr["pdist"] - prev["pdist"]
+                if denom == 0:
+                    continue
+                fraction = (reference_pdist - prev["pdist"]) / denom
+                time_diff = curr["tmstmp"] - prev["tmstmp"]
+                arrival_time = prev["tmstmp"] + fraction * time_diff
 
-            if pdist < lower:
-                was_before_stop = True
+                # Suppress jitter: skip if too close to last arrival for this vehicle
+                if last_arrival_time is not None:
+                    if arrival_time - last_arrival_time < min_gap:
+                        continue
 
-            if was_before_stop and not detected and lower <= pdist <= upper:
                 arrivals.append(
                     {
                         "vid": vid,
-                        "arrival_time": row["tmstmp"],
-                        "pdist_at_arrival": pdist,
+                        "arrival_time": arrival_time,
+                        "pdist_at_arrival": reference_pdist,
                     }
                 )
-                detected = True
+                last_arrival_time = arrival_time
 
     if not arrivals:
         return pd.DataFrame(columns=["vid", "arrival_time", "pdist_at_arrival"])

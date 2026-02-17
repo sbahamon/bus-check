@@ -77,9 +77,7 @@ def compute_route_headway_data(d1: D1Client) -> list[dict]:
         reference_pdist = int((min_pdist + max_pdist) / 2)
 
         try:
-            arrivals = detect_stop_arrivals(
-                positions, reference_pdist, tolerance_feet=500
-            )
+            arrivals = detect_stop_arrivals(positions, reference_pdist)
             if len(arrivals) < 2:
                 print(
                     f"  Route {route:>3s}: only {len(arrivals)} arrival(s), skipping"

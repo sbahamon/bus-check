@@ -94,13 +94,9 @@
     <p>Daily boardings by route from the <a href="https://data.cityofchicago.org/Transportation/CTA-Ridership-Bus-Routes-Daily-Totals/jyb9-n7fm">Chicago Data Portal SODA API</a> (dataset <code>jyb9-n7fm</code>). Public, no authentication required. Our data covers January 2023 through November 30, 2025 &mdash; 122,084 route-day observations across 131 routes.</p>
 
     <h3>Real-time vehicle positions</h3>
-    <p>CTA Bus Tracker API (<code>getvehicles</code> endpoint), polled for all 20 Frequent Network routes and stored in Cloudflare D1. The collection frequency has varied over the project's history:</p>
-    <ul>
-      <li><strong>Feb 11&ndash;13, 2026:</strong> Polled every 60 seconds via a local collector process. This produced dense, high-quality data (~500&ndash;800 polls/day) ideal for headway detection.</li>
-      <li><strong>Feb 14&ndash;16, 2026:</strong> Polled every 30 minutes via GitHub Actions. The local collector was stopped and the 30-minute interval proved too infrequent for the headway detection algorithm, which needs to track individual vehicles crossing reference stops. Only ~19 polls/day, missing ~98% of bus arrivals.</li>
-      <li><strong>Feb 16, 2026 onward:</strong> Polled every 5 minutes via a Cloudflare Worker cron trigger. A significant improvement over 30-minute polling, with ~180 polls/day during service hours.</li>
-    </ul>
-    <p>Headway analysis results should be interpreted with this context: 96% of useful headway observations come from the initial 3-day collection window (Feb 11&ndash;13). As the Worker accumulates data, results will increasingly reflect the 5-minute polling period. See the <a href="headways.html">headway analysis page</a> for current results and caveats.</p>
+    <p>CTA Bus Tracker API (<code>getvehicles</code> endpoint), polled every 5 minutes for all 20 Frequent Network routes via a Cloudflare Worker cron trigger and stored in Cloudflare D1. Collection runs during Frequent Network service hours (weekdays 6 AM&ndash;9 PM, weekends 9 AM&ndash;9 PM Chicago time).</p>
+    <p><strong>Collection history:</strong> Early prototyping (Feb 11&ndash;16, 2026) used local polling at 60-second intervals and then GitHub Actions at 30-minute intervals. On Feb 17, 2026, the database was cleaned to contain only data from the current 5-minute Worker collector, ensuring a consistent sampling methodology across the entire dataset. The early data is archived locally for algorithm validation purposes.</p>
+    <p>See the <a href="headways.html">headway analysis page</a> for current results and caveats.</p>
 
     <h3>Schedules</h3>
     <p>CTA GTFS static feed, which provides planned stop times, trip schedules, and route geometry (shapes). Used for scheduled headway computation and the route map.</p>
@@ -156,7 +152,7 @@
         <tr>
           <td class="nb-num">02</td>
           <td><strong>Headway Exploration</strong><br>Scheduled vs. observed headways</td>
-          <td>Schedule: 99.8% &le; 10 min. Observed: ~59%. <a href="headways.html">Details &rarr;</a></td>
+          <td>Schedule: 99.8% &le; 10 min. <a href="headways.html">See current observed results &rarr;</a></td>
         </tr>
         <tr>
           <td class="nb-num">03</td>
@@ -210,7 +206,7 @@
       <summary>02 &mdash; Headway Exploration</summary>
       <div class="method-content">
         <p>Assesses whether Frequent Network routes actually achieve the promised 10-minute headways. Compares scheduled headways from GTFS against observed headways from CTA Bus Tracker API data.</p>
-        <p>On paper, all 20 routes schedule 97&ndash;100% of headways at 10 minutes or less. In practice, only about 59% of observed headways meet the promise (filtered to the service window). See the <a href="headways.html">headway analysis page</a> for full results and caveats about the limited data collection window.</p>
+        <p>On paper, all 20 routes schedule 97&ndash;100% of headways at 10 minutes or less. Arrival detection uses a crossing+interpolation algorithm that identifies when each vehicle's <code>pdist</code> (distance along route) crosses a reference point, with arrival times linearly interpolated between bounding observations. See the <a href="headways.html">headway analysis page</a> for current results.</p>
       </div>
     </details>
 
@@ -305,8 +301,69 @@
       <li><strong>Small sample.</strong> Only 20 treated routes and ~15 control routes. This limits statistical power, especially for Phases 2 and 3 (4 routes each). Cluster-robust standard errors are wide.</li>
       <li><strong>Possible spillover effects.</strong> If the Frequent Network draws riders from nearby non-FN routes, control route ridership would decrease, biasing DiD estimates upward. We have not tested for this.</li>
       <li><strong>No rider-level data.</strong> We observe boardings per route per day, not individual riders. We cannot distinguish new riders from riders switching from other routes or modes.</li>
-      <li><strong>Headway data is growing but uneven.</strong> ~125 hours of real-time collection (Feb 11&ndash;17, 2026). The collection frequency changed over this period: 60-second local polling (Feb 11&ndash;13) produced dense, high-quality headway observations; 30-minute GitHub Actions polling (Feb 14&ndash;16) was too infrequent for reliable headway detection; 5-minute Cloudflare Worker polling (Feb 16+) is now accumulating better data. Current results are dominated by the initial 3-day window. See the <a href="headways.html">headway page</a> for full caveats.</li>
+      <li><strong>Headway data is growing.</strong> Real-time vehicle positions are collected every 5 minutes via a Cloudflare Worker (since Feb 16, 2026) and stored in Cloudflare D1. Earlier prototype data from different collection frequencies was cleaned out on Feb 17, 2026, ensuring consistent methodology across the dataset. At minimum two weeks of continuous data are needed for robust headway conclusions. See the <a href="headways.html">headway page</a> for current results and caveats.</li>
     </ul>
+  </div>
+</section>
+
+<!-- ═══ ENGINEERING CHANGELOG ═══ -->
+<section>
+  <div class="container prose">
+    <h2>Headway Collection: A Post-Mortem</h2>
+    <p>The headway analysis went through several iterations before arriving at its current methodology. This section documents what changed, when, and why &mdash; both for transparency and because the process itself illustrates the challenges of measuring transit performance from real-time API data.</p>
+
+    <h3>Era 1: Local collector &mdash; Feb 11&ndash;13, 2026</h3>
+    <p>Data collection began on February 11, 2026, using a local Python script (<code>headway_collector.py</code>) that polled CTA&rsquo;s Bus Tracker API every <strong>60 seconds</strong> for all 20 Frequent Network routes. Vehicle positions were stored in a local SQLite database. Over three days, this produced <strong>464,674 position records</strong> &mdash; dense, high-quality data with roughly 60 observations per vehicle per hour.</p>
+    <p>At this polling frequency, arrival detection worked well. The original algorithm looked for vehicles whose <code>pdist</code> (distance along route in feet) fell within a &plusmn;500-foot window around a reference stop. With observations every 60 seconds, a bus traveling at ~1,000 feet per minute would typically have at least one observation inside the 1,000-foot detection window as it passed through.</p>
+    <p>The limitation was operational: the script had to run continuously on a local machine, which wasn&rsquo;t sustainable for long-term monitoring.</p>
+
+    <h3>Era 2: GitHub Actions &mdash; Feb 14&ndash;16, 2026</h3>
+    <p>To automate collection, we moved to a <strong>GitHub Actions cron job</strong> that polled every 30 minutes and wrote positions to Cloudflare D1 via the REST API. This solved the operational problem but created a data quality problem: at 30-minute intervals, a bus covers roughly <strong>30,000 feet</strong> between observations. The 1,000-foot detection window was almost never hit. Over three days, this produced only <strong>15,414 records</strong> with very few usable arrival detections.</p>
+
+    <h3>Era 3: Cloudflare Worker &mdash; Feb 16, 2026 onward</h3>
+    <p>On February 16, we deployed a <strong>Cloudflare Worker</strong> with a cron trigger that polls every <strong>5 minutes</strong> during service hours and writes directly to D1 via native binding. This was a significant improvement over GitHub Actions: faster execution, no cold start overhead, and a 5-minute interval that captures bus movements at a much finer granularity.</p>
+    <p>But a problem remained: even at 5-minute polling, a bus covers roughly <strong>5,000&ndash;7,500 feet</strong> between observations. The original &plusmn;500-foot detection window was still too narrow. Most buses were jumping from well before the reference point to well past it in a single polling interval, never appearing &ldquo;inside&rdquo; the window.</p>
+
+    <h3>Discovering the detection problem &mdash; Feb 17, 2026</h3>
+    <p>To decide how to handle the three eras of data with different polling frequencies, we consulted three large language models (ChatGPT, Claude, and Gemini) with a detailed description of the data and algorithm. All three agreed that Era 2 data was essentially unusable. But <strong>Gemini identified the critical insight</strong>: the detection algorithm itself had a fundamental mismatch with 5-minute polling.</p>
+    <p>The math was straightforward. A bus traveling at ~17 mph covers ~1,300 feet per minute, or about <strong>6,600 feet in 5 minutes</strong>. The detection window was 1,000 feet wide (&plusmn;500 feet). The probability of a bus having an observation inside that window during a 5-minute poll was roughly 1,000 / 6,600 &asymp; <strong>15%</strong>. In practice, validation against the dense Era 1 data confirmed an approximately <strong>80% false negative rate</strong> &mdash; four out of five actual arrivals went undetected.</p>
+    <p>This explained why the initial headway results showed only ~59% adherence to the 10-minute promise, and why Route 47 appeared to have zero arrivals despite buses clearly running.</p>
+
+    <h3>The fix: crossing detection with interpolation &mdash; Feb 17, 2026</h3>
+    <p>The solution was to stop asking &ldquo;is the bus inside the window?&rdquo; and instead ask <strong>&ldquo;did the bus cross the reference point between these two observations?&rdquo;</strong></p>
+    <p>The new algorithm examines consecutive observation pairs for each vehicle. If <code>pdist</code> was below the reference point in one observation and at or above it in the next, a crossing occurred. The exact arrival time is then <strong>linearly interpolated</strong>:</p>
+    <pre><code>fraction = (reference - prev_pdist) / (curr_pdist - prev_pdist)
+arrival_time = prev_time + fraction &times; (curr_time - prev_time)</code></pre>
+    <p>For example, if a bus is at pdist 15,000 at 2:00 PM and pdist 22,000 at 2:05 PM, with a reference point at 20,000:</p>
+    <ul>
+      <li>fraction = (20,000 &minus; 15,000) / (22,000 &minus; 15,000) = 0.714</li>
+      <li>arrival_time = 2:00 PM + 0.714 &times; 5 minutes = ~2:03:34 PM</li>
+    </ul>
+    <p>This assumes roughly constant speed between observations &mdash; an imperfect but reasonable approximation over 5-minute intervals. The interpolation is much more accurate than not detecting the arrival at all.</p>
+    <p>A <strong>30-minute minimum gap</strong> between same-vehicle arrivals prevents false duplicates from GPS jitter, where <code>pdist</code> oscillates near the reference point without the bus actually making a new trip.</p>
+
+    <h3>Validation &mdash; Feb 17, 2026</h3>
+    <p>To verify the new algorithm, we used the dense Era 1 data (60-second polling) as ground truth. We ran the crossing algorithm at full resolution, then downsampled the same data to 5-minute intervals and re-ran it. Comparing the results:</p>
+    <table class="nb-table">
+      <thead>
+        <tr><th>Metric</th><th>60-second (ground truth)</th><th>5-minute (simulated)</th><th>Difference</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Arrivals detected</td><td>7,345</td><td>6,968</td><td>94.9% detection rate</td></tr>
+        <tr><td>Mean adherence (&le; 10 min)</td><td>92.2%</td><td>90.8%</td><td>&minus;1.5 pp</td></tr>
+        <tr><td>Routes with arrivals</td><td>20 / 20</td><td>20 / 20</td><td>&mdash;</td></tr>
+      </tbody>
+    </table>
+    <p>The 5-minute resolution captures 94.9% of arrivals and produces adherence metrics within 1.5 percentage points of ground truth across all 20 routes. This was deemed acceptable for ongoing monitoring. The validation script (<code>scripts/validate_algorithm.py</code>) is included in the repository.</p>
+
+    <h3>Data cleanup &mdash; Feb 17, 2026</h3>
+    <p>With the algorithm fixed, we cleaned the D1 database to ensure methodological consistency:</p>
+    <ul>
+      <li><strong>Era 1 data (464,674 rows):</strong> Removed from D1. This data was collected at 60-second intervals by a different pipeline. Mixing it with 5-minute Worker data would create a composition effect where different time periods have different measurement precision. The Era 1 data is preserved locally in <code>data/headway.db</code> for validation purposes.</li>
+      <li><strong>Era 2 data (15,414 rows):</strong> Removed from D1. The 30-minute polling interval produced almost no usable arrival detections even with the improved algorithm.</li>
+      <li><strong>Era 3 data (25,049 rows at time of cleanup):</strong> Retained. All data in D1 now comes from a single, consistent collection methodology &mdash; 5-minute Worker polling &mdash; ensuring that the headway analysis page reflects a uniform dataset.</li>
+    </ul>
+    <p>The daily analysis pipeline (<code>scripts/update_headways.py</code>) reads from D1 and updates the <a href="headways.html">headway page</a> automatically. As the Worker continues to collect data, the headway results will become increasingly robust.</p>
   </div>
 </section>
 
