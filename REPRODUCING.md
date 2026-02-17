@@ -53,7 +53,7 @@ done
 | Notebook | Purpose | Data Source | Key Output |
 |----------|---------|-------------|------------|
 | 01_ridership_exploration | 20-route YoY ridership comparison + pooled DiD | SODA API | YoY changes, pooled DiD estimate |
-| 02_headway_exploration | GTFS scheduled vs. observed headway comparison | GTFS + headway.db | Headway adherence rates |
+| 02_headway_exploration | GTFS scheduled vs. observed headway comparison | GTFS + Cloudflare D1 | Headway adherence rates |
 | 03_ridership_phases_1_3 | Phase 1-3 only analysis (excludes Phase 4) | SODA API | Filtered YoY comparison |
 | 04_ridership_without_79 | Sensitivity: excludes Route 79 outlier | SODA API | Robustness check |
 | 05_ridership_share | FN share of total CTA ridership over time | SODA API | Share trend lines |
@@ -81,8 +81,8 @@ Key numbers that notebook outputs should match:
 
 ## What You CAN'T Reproduce from a Fresh Clone
 
-- Observed headway data (requires running the collector with `CTA_API_KEY`)
-- Notebook 02's observed headway charts (skip these, or run the collector first)
+- Observed headway data — collected by a Cloudflare Worker (`worker/`) that polls CTA Bus Tracker every 5 min and writes to Cloudflare D1. For local reproduction, run the local collector (`uv run python -m bus_check.collector.headway_collector`) with a `CTA_API_KEY` in `.env`.
+- Notebook 02's observed headway charts (skip these, or run the local collector first)
 - Exact numbers may drift slightly if Chicago updates the SODA dataset
 
 ## Project Structure
@@ -90,12 +90,13 @@ Key numbers that notebook outputs should match:
 ```
 src/bus_check/
   config.py          # Route lists, phase dates, service windows — START HERE
-  data/              # API clients (ridership.py, bus_tracker.py, gtfs.py, db.py)
+  data/              # API clients (ridership.py, bus_tracker.py, gtfs.py, db.py, d1_client.py)
   analysis/          # Statistical models (ridership_analysis.py, headway_analysis.py)
-  collector/         # Real-time Bus Tracker polling
+  collector/         # Local Bus Tracker polling (writes to SQLite)
 notebooks/           # 8 analysis notebooks
 tests/               # 159 tests (pytest + responses HTTP mocking)
 site/                # Static website (GitHub Pages)
+worker/              # Cloudflare Worker: polls CTA every 5 min → D1 (live data collection)
 ```
 
 ## Troubleshooting
@@ -104,6 +105,6 @@ site/                # Static website (GitHub Pages)
 |---------|----------|
 | `ModuleNotFoundError: No module named 'bus_check'` | Run `uv pip install -e .` then use `uv run --no-sync` |
 | `uv run` drops the editable install | Always use `uv run --no-sync` after editable install |
-| Notebook 02 fails on observed headways | Expected if no `data/headway.db` — run collector or skip |
+| Notebook 02 fails on observed headways | Expected without headway data — run the local collector (`uv run python -m bus_check.collector.headway_collector`) or skip |
 | SODA API rate limit | Wait and retry; notebooks have no auth requirement |
 | Test failures | Run `uv sync` first, then `uv run pytest` |

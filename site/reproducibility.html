@@ -54,7 +54,7 @@ uv run --no-sync jupyter lab</code></pre>
     <ul>
       <li><strong>Python 3.11+</strong> and <strong><a href="https://docs.astral.sh/uv/">uv</a></strong> (Astral's package manager)</li>
       <li><strong>Internet access</strong> &mdash; notebooks fetch data live from Chicago's public data portal</li>
-      <li><strong>No API keys</strong> &mdash; ridership data is public. A CTA API key is only needed for the optional headway collector.</li>
+      <li><strong>No API keys</strong> &mdash; ridership data is public. A CTA API key is only needed if you want to run your own headway data collection (a Cloudflare Worker handles this automatically for the live site).</li>
       <li><strong>~10 minutes</strong> to run all 8 notebooks (most time is API data fetching)</li>
     </ul>
   </div>
@@ -94,7 +94,7 @@ uv run --no-sync jupyter lab</code></pre>
         <tr>
           <td class="nb-num">02</td>
           <td><strong>Headway Exploration</strong><br>GTFS scheduled vs. observed headways</td>
-          <td>GTFS + headway.db</td>
+          <td>GTFS + Cloudflare D1</td>
           <td>Headway adherence rates</td>
         </tr>
         <tr>
@@ -152,7 +152,7 @@ done</code></pre>
   <div class="container prose">
     <h2>Verifying the Results</h2>
     <p>Run the test suite to confirm all components work correctly:</p>
-    <pre><code>uv run pytest   # 129 tests should pass</code></pre>
+    <pre><code>uv run pytest   # 159 tests should pass</code></pre>
     <p>Then compare notebook outputs against the key numbers on the <a href="index.html">main page</a>:</p>
     <ul>
       <li><strong>Phase 1 DiD:</strong> +428 rides/day (+5.9%), 95% CI [+42, +799]</li>
@@ -184,13 +184,13 @@ done</code></pre>
 <section>
   <div class="container prose">
     <h2>Headway Data Caveat</h2>
-    <p>The headway analysis (notebook 02) depends on real-time data collected by a background process. A fresh clone won't have this data. Your options:</p>
+    <p>The headway analysis (notebook 02) depends on real-time vehicle position data collected by a <strong>Cloudflare Worker</strong> that polls the CTA Bus Tracker API every 5 minutes during service hours and stores positions in Cloudflare D1. A fresh clone won't have this data. Your options:</p>
     <ul>
       <li><strong>Skip</strong> notebook 02's observed headway section (scheduled headways still work from GTFS)</li>
-      <li><strong>Run the collector yourself:</strong></li>
+      <li><strong>Run the local collector yourself:</strong></li>
     </ul>
     <pre><code>uv run python -m bus_check.collector.headway_collector</code></pre>
-    <p>This requires a <code>CTA_API_KEY</code> in your <code>.env</code> file. See <code>.env.example</code> for the template.</p>
+    <p>This requires a <code>CTA_API_KEY</code> in your <code>.env</code> file. See <code>.env.example</code> for the template. The local collector writes to <code>data/headway.db</code> (SQLite). For the live site, a Cloudflare Worker (<code>worker/</code>) handles collection automatically.</p>
   </div>
 </section>
 
@@ -202,7 +202,7 @@ done</code></pre>
       <li><strong>SODA data is live</strong> &mdash; results may change if Chicago updates the dataset</li>
       <li><strong>As of February 2026,</strong> ridership data goes through November 30, 2025</li>
       <li><strong>Phase launch dates are confirmed</strong> &mdash; <code>config.py</code> uses March 23, June 15, August 17, and December 21</li>
-      <li><strong>Headway data is not included in the repo</strong> &mdash; the collector must be run separately</li>
+      <li><strong>Headway data is not included in the repo</strong> &mdash; observed headway data is collected by a Cloudflare Worker into D1 (for the live site) or by a local collector into SQLite (for local reproduction)</li>
     </ul>
   </div>
 </section>
@@ -213,10 +213,11 @@ done</code></pre>
     <h2>Project Structure</h2>
     <ul>
       <li><code>src/bus_check/config.py</code> &mdash; all route/phase/date constants</li>
-      <li><code>src/bus_check/data/</code> &mdash; API clients (ridership, GTFS, Bus Tracker)</li>
+      <li><code>src/bus_check/data/</code> &mdash; API clients (ridership, GTFS, Bus Tracker, D1)</li>
       <li><code>src/bus_check/analysis/</code> &mdash; statistical models (ridership DiD, headway metrics)</li>
       <li><code>notebooks/</code> &mdash; the 8 analysis notebooks</li>
-      <li><code>tests/</code> &mdash; 129 tests validating all components</li>
+      <li><code>worker/</code> &mdash; Cloudflare Worker for automated headway data collection</li>
+      <li><code>tests/</code> &mdash; 159 tests validating all components</li>
     </ul>
   </div>
 </section>
