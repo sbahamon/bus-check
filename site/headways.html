@@ -60,7 +60,7 @@
 <section>
   <div class="container prose">
     <h2>How We Measured</h2>
-    <p>We polled CTA's Bus Tracker API every 60 seconds for real-time vehicle positions on all 20 Frequent Network routes. Stop arrivals are detected when a vehicle comes within 30 meters of a reference stop (selected at the midpoint of each route). Headways are computed as the time between consecutive arrivals at the same stop traveling in the same direction.</p>
+    <p>We poll CTA's Bus Tracker API for real-time vehicle positions on all 20 Frequent Network routes. Stop arrivals are detected when a vehicle comes within 30 meters of a reference stop (selected at the midpoint of each route). Headways are computed as the time between consecutive arrivals at the same stop traveling in the same direction.</p>
 
     <h3>Scheduled headways</h3>
     <p>Scheduled headways come from the CTA's GTFS static feed, which provides planned stop times for each trip. We computed the time between consecutive scheduled arrivals at the same reference stop and filtered to the Frequent Network service window.</p>
@@ -74,7 +74,8 @@
     <p>Both scheduled and observed headways are filtered to these windows for comparison.</p>
 
     <h3>Data collection</h3>
-    <p>Vehicle positions are collected automatically every 30 minutes via GitHub Actions and stored in Cloudflare D1. This page updates daily with the latest analysis. Currently approximately <strong>99 hours</strong> of real-time collection (Feb 11&ndash;16, 2026).</p>
+    <p>Vehicle positions are collected automatically every 5 minutes via a Cloudflare Worker and stored in Cloudflare D1. This page updates daily with the latest analysis. Currently approximately <strong>99 hours</strong> of real-time collection (Feb 11&ndash;16, 2026).</p>
+    <p><strong>Note on collection frequency:</strong> Data was initially collected every 60 seconds (Feb 11&ndash;13), then every 30 minutes (Feb 14&ndash;16), then every 5 minutes (Feb 16 onward). The dense initial data dominates current headway estimates. The 30-minute gap period contributed very few usable observations because the headway detection algorithm requires frequent snapshots to track individual buses crossing reference stops. Results will increasingly reflect the 5-minute polling period as data accumulates.</p>
   </div>
 </section>
 

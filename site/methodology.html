@@ -94,7 +94,13 @@
     <p>Daily boardings by route from the <a href="https://data.cityofchicago.org/Transportation/CTA-Ridership-Bus-Routes-Daily-Totals/jyb9-n7fm">Chicago Data Portal SODA API</a> (dataset <code>jyb9-n7fm</code>). Public, no authentication required. Our data covers January 2023 through November 30, 2025 &mdash; 122,084 route-day observations across 131 routes.</p>
 
     <h3>Real-time vehicle positions</h3>
-    <p>CTA Bus Tracker API (<code>getvehicles</code> endpoint), polled every 60 seconds for all 20 Frequent Network routes. Used to compute observed headways. See the <a href="headways.html">headway analysis page</a> for details.</p>
+    <p>CTA Bus Tracker API (<code>getvehicles</code> endpoint), polled for all 20 Frequent Network routes and stored in Cloudflare D1. The collection frequency has varied over the project's history:</p>
+    <ul>
+      <li><strong>Feb 11&ndash;13, 2026:</strong> Polled every 60 seconds via a local collector process. This produced dense, high-quality data (~500&ndash;800 polls/day) ideal for headway detection.</li>
+      <li><strong>Feb 14&ndash;16, 2026:</strong> Polled every 30 minutes via GitHub Actions. The local collector was stopped and the 30-minute interval proved too infrequent for the headway detection algorithm, which needs to track individual vehicles crossing reference stops. Only ~19 polls/day, missing ~98% of bus arrivals.</li>
+      <li><strong>Feb 16, 2026 onward:</strong> Polled every 5 minutes via a Cloudflare Worker cron trigger. A significant improvement over 30-minute polling, with ~180 polls/day during service hours.</li>
+    </ul>
+    <p>Headway analysis results should be interpreted with this context: 96% of useful headway observations come from the initial 3-day collection window (Feb 11&ndash;13). As the Worker accumulates data, results will increasingly reflect the 5-minute polling period. See the <a href="headways.html">headway analysis page</a> for current results and caveats.</p>
 
     <h3>Schedules</h3>
     <p>CTA GTFS static feed, which provides planned stop times, trip schedules, and route geometry (shapes). Used for scheduled headway computation and the route map.</p>
@@ -299,7 +305,7 @@
       <li><strong>Small sample.</strong> Only 20 treated routes and ~15 control routes. This limits statistical power, especially for Phases 2 and 3 (4 routes each). Cluster-robust standard errors are wide.</li>
       <li><strong>Possible spillover effects.</strong> If the Frequent Network draws riders from nearby non-FN routes, control route ridership would decrease, biasing DiD estimates upward. We have not tested for this.</li>
       <li><strong>No rider-level data.</strong> We observe boardings per route per day, not individual riders. We cannot distinguish new riders from riders switching from other routes or modes.</li>
-      <li><strong>Headway data is growing.</strong> ~99 hours of real-time collection (Feb 11&ndash;16, 2026). Data accumulates daily. See the <a href="headways.html">headway page</a> for full caveats.</li>
+      <li><strong>Headway data is growing but uneven.</strong> ~99 hours of real-time collection (Feb 11&ndash;16, 2026). The collection frequency changed over this period: 60-second local polling (Feb 11&ndash;13) produced dense, high-quality headway observations; 30-minute GitHub Actions polling (Feb 14&ndash;16) was too infrequent for reliable headway detection; 5-minute Cloudflare Worker polling (Feb 16+) is now accumulating better data. Current results are dominated by the initial 3-day window. See the <a href="headways.html">headway page</a> for full caveats.</li>
     </ul>
   </div>
 </section>

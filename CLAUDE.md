@@ -29,6 +29,7 @@ Analyzes CTA Frequent Network bus routes to determine:
 - `src/bus_check/collector/` — real-time Bus Tracker polling pipeline
 - `tests/` — mirrors src/ structure, test-first development
 - `notebooks/` — Jupyter notebooks for exploration and final output
+- `worker/` — Cloudflare Worker headway collector (polls CTA every 5 min → D1)
 - `scripts/` — automation scripts (collect_to_d1.py, update_headways.py)
 - `site/` — static website (GitHub Pages): analysis, headways, methodology, reproducibility
 
@@ -44,12 +45,29 @@ Analyzes CTA Frequent Network bus routes to determine:
 - Never commit .env; .env.example has the template
 - GitHub Actions secrets: CTA_API_KEY, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, D1_DATABASE_ID
 
-## Automated collection (GitHub Actions)
-- `.github/workflows/collect-headways.yml` — polls CTA API every 30 min, writes to Cloudflare D1
-- `.github/workflows/update-headways.yml` — daily analysis: reads D1, updates site/headways.html, pushes
+## Headway collection (Cloudflare Worker)
+The headway detection algorithm (`detect_stop_arrivals`) tracks individual vehicles crossing
+reference stops, which requires frequent polling. The original GitHub Actions collector polled
+every 30 minutes — far too infrequent (missed ~98% of bus arrivals). A Cloudflare Worker now
+polls every 5 minutes via cron trigger, writing directly to D1 via native binding.
+
+- `worker/src/index.js` — single-file Worker source
+- `worker/wrangler.toml` — config with cron trigger + D1 binding
+- Deploy: `cd worker && npx wrangler deploy`
+- Logs: `cd worker && npx wrangler tail`
+- Health: `curl https://bus-check-collector.sbahamon1.workers.dev/health`
+- CTA_API_KEY stored as Worker secret (set via Cloudflare dashboard)
+- D1 database: `bus-check-headways` (ID: `cfaca7b6-4312-4d15-b861-18851989403d`)
+
+**Data collection history:** 60s local polling Feb 11-13 (dense, high quality) → 30min GHA
+polling Feb 14-16 (sparse, nearly useless for headways) → 5min Worker polling Feb 16+.
+See `handoff.md` Known Issue #3 for cleanup details on the sparse gap data.
+
+## Automated analysis (GitHub Actions)
+- `.github/workflows/update-headways.yml` — daily: reads D1, updates site/headways.html, deploys to Pages
 - `.github/workflows/deploy.yml` — deploys site/ to GitHub Pages on push to main
-- `src/bus_check/data/d1_client.py` — Cloudflare D1 REST API client
-- D1 database: `bus-check-headways` (schema mirrors local SQLite vehicle_positions table)
+- `.github/workflows/collect-headways.yml` — OLD 30-min collector (cron disabled), kept as emergency fallback
+- `src/bus_check/data/d1_client.py` — Cloudflare D1 REST API client (used by update script)
 
 ## Data sources
 - Chicago Data Portal SODA API: `https://data.cityofchicago.org/resource/jyb9-n7fm.json` (ridership by route)

@@ -2,11 +2,11 @@ name: Collect Headway Data
 
 on:
   schedule:
-    # Every 30 minutes during a broad UTC window that covers Chicago service
-    # hours in both CST (UTC-6) and CDT (UTC-5). The script checks Chicago
-    # time and exits early if outside the service window.
-    - cron: '0,30 0-4,10-23 * * *'
-  workflow_dispatch: # Allow manual trigger for testing
+    # DISABLED: Replaced by Cloudflare Worker (worker/) polling every 5 min.
+    # Keep for emergency fallback — re-enable cron if Worker goes down.
+    # - cron: '0,30 0-4,10-23 * * *'
+    - cron: '0 0 31 2 *'  # Never runs (Feb 31 doesn't exist) — placeholder to keep valid YAML
+  workflow_dispatch: # Manual trigger for emergency fallback
 
 concurrency:
   group: collect-headways

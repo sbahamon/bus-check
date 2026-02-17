@@ -1,0 +1,15 @@
+name = "bus-check-collector"
+main = "src/index.js"
+compatibility_date = "2026-02-16"
+
+# Poll every 5 minutes; Worker checks Chicago time and skips outside service window
+[triggers]
+crons = ["*/5 * * * *"]
+
+# D1 binding to existing database
+[[d1_databases]]
+binding = "DB"
+database_name = "bus-check-headways"
+database_id = "cfaca7b6-4312-4d15-b861-18851989403d"
+
+# CTA_API_KEY is set via: npx wrangler secret put CTA_API_KEY

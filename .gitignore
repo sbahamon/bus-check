@@ -11,5 +11,7 @@ build/
 .ruff_cache/
 _build/
 .claude/
+worker/node_modules/
+worker/.wrangler/
 scripts/migrate_local_to_d1.py
 Screenshot 2026-02-11 at 9.59.30*.png

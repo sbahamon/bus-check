@@ -13,13 +13,20 @@ Inspired by a Bluesky post from @laurie-merrell asking exactly these questions (
 - SQLite for data cache
 - Package installed in editable mode: `uv pip install -e .` then `uv run --no-sync` (MUST use `--no-sync` or `uv run` re-syncs and drops the editable install, causing `ModuleNotFoundError`)
 
-## Running collector process
-A headway collector **may still be running** — check with `ps aux | grep headway_collector | grep -v grep`.
-- Data stored in: `data/headway.db`
-- To start: `./run_collector.sh` (foreground) or `PYTHONPATH=src nohup .venv/bin/python -m bus_check.collector.headway_collector > data/collector.log 2>&1 &` (background)
-- To check data: `sqlite3 data/headway.db "SELECT COUNT(*) as positions, COUNT(DISTINCT collected_at) as polls, COUNT(DISTINCT route) as routes FROM vehicle_positions;"`
-- API key is in `.env` (CTA_API_KEY). Rate usage: ~1,800 calls/day (well within 10k limit)
-- **Warning:** Don't start multiple instances — check `ps` first or you'll get duplicate data.
+## Data collection: Cloudflare Worker
+Vehicle positions are collected by a **Cloudflare Worker** (`worker/`) that polls CTA Bus Tracker every 5 minutes during service hours and writes directly to D1 via native binding.
+
+- **Worker name:** `bus-check-collector`
+- **Cron:** `*/5 * * * *` (every 5 min, checks Chicago time internally)
+- **D1 database:** `bus-check-headways` (ID: `cfaca7b6-4312-4d15-b861-18851989403d`)
+- **Health check:** `curl https://bus-check-collector.<subdomain>.workers.dev/health`
+- **Logs:** `cd worker && npx wrangler tail` (live stream)
+- **Deploy:** `cd worker && npx wrangler deploy`
+- **CTA_API_KEY** stored as Worker secret (set via `npx wrangler secret put CTA_API_KEY`)
+
+**Previous collectors (no longer active):**
+- Local collector (`src/bus_check/collector/headway_collector.py`) — polled every 60s, wrote to local SQLite. Ran Feb 11-13, 2026.
+- GitHub Actions (`collect-headways.yml`) — polled every 30 min, wrote to D1 via REST API. Cron disabled, `workflow_dispatch` kept as emergency fallback.
 
 ## The 20 Frequent Network Routes
 
@@ -81,8 +88,13 @@ bus-check/
     style.css            # Shared styles
     routes.geojson       # Route geometry for map
 
+  worker/                # Cloudflare Worker (headway collector)
+    wrangler.toml        # Worker config: cron trigger, D1 binding
+    src/index.js         # Single-file Worker: poll CTA → D1
+    package.json         # Minimal (wrangler dev dep only)
+
   data/                  # gitignored (/data/ in .gitignore)
-    headway.db           # Collector writes here
+    headway.db           # Old local collector writes here
     gtfs/                # Downloaded GTFS feed
 ```
 
@@ -111,7 +123,33 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 
 1. **`uv pip install -e .` + `uv run --no-sync` required for notebook execution** — Always use: `uv pip install -e . && uv run --no-sync jupyter execute <notebook> --inplace`
 
-2. **Headway data is preliminary** — collected continuously via GitHub Actions + Cloudflare D1. Need 2+ weeks for robust conclusions.
+2. **Headway data is preliminary** — collected continuously via Cloudflare Worker + D1. Need 2+ weeks for robust conclusions.
+
+3. **Sparse data gap: Feb 14-16, 2026 (needs cleanup)**
+
+   **What happened:** The local collector (60-second polling) stopped on Feb 13. From Feb 14-16, only the GitHub Actions collector ran (30-minute polling). This produced dramatically fewer useful data points:
+
+   | Period | Polls/day | Source | Headway detection quality |
+   |--------|-----------|--------|--------------------------|
+   | Feb 11-13 | 130-833 | Local collector (60s) | Excellent — catches most bus arrivals |
+   | Feb 14-16 | ~19 | GitHub Actions (30 min) | Very poor — misses ~98% of arrivals |
+   | Feb 16+ | ~180 | Cloudflare Worker (5 min) | Good — significant improvement |
+
+   **Why it matters:** The headway detection algorithm (`detect_stop_arrivals` in `headway_analysis.py`) tracks individual vehicles crossing reference stops. It needs to see a vehicle *before* and *at* the stop in consecutive snapshots. With 30-minute gaps, a bus traverses the entire route between polls, so most arrivals are never detected. The sparse Feb 14-16 data contributes very few detected arrivals but may introduce noise (artifically long observed headways from the sparse sampling).
+
+   **Impact on analysis:** Minimal right now — 96% of all data (464K of 483K rows) is from the dense Feb 11-13 period, so the sparse data barely moves the headway percentages. But as the Worker accumulates more 5-minute data, the Feb 14-16 gap will become a proportionally smaller (but still noisy) slice.
+
+   **Cleanup options (not yet done):**
+   ```sql
+   -- Option A: Delete the sparse data entirely
+   DELETE FROM vehicle_positions
+   WHERE collected_at >= '2026-02-14T00:00:00'
+     AND collected_at < '2026-02-16T20:00:00';  -- adjust to Worker start time
+
+   -- Option B: Leave it — the noise is minimal and will shrink over time
+   ```
+
+   **Recommendation:** Delete the sparse data once the Worker has accumulated several days of good 5-minute data, so the gap doesn't introduce noise into the growing dataset. Query D1 to find the exact cutoff: `SELECT MIN(collected_at) FROM vehicle_positions WHERE collected_at >= '2026-02-16' AND collected_at LIKE '%:00:%' OR collected_at LIKE '%:05:%'` (look for the first 5-min-interval poll from the Worker).
 
 ## Reproducibility
 - **For humans:** `site/reproducibility.html` — step-by-step guide on the project website
@@ -120,11 +158,13 @@ The **pooled DiD is misleading** (-4.6%) — it's an artifact of mixing treatmen
 - Key gotcha: always `uv pip install -e . && uv run --no-sync jupyter ...`
 
 ## Pending work
-- [ ] Let collector run for 2+ weeks for robust headway conclusions
+- [ ] Let Worker collect for 2+ weeks for robust headway conclusions
+- [ ] Clean up sparse Feb 14-16 data from D1 (see Known Issue #3 above)
 - [x] ~~Confirm exact Phase 2/3 launch dates from CTA press releases~~ — Done: Phase 2 = Jun 15, Phase 3 = Aug 17
 - [ ] Re-execute notebook 02 once more headway data is collected
 - [x] ~~Filter observed headways to service window hours~~ — Done: `filter_arrivals_to_service_window()` added to headway_analysis.py
 - [ ] Investigate Route 47 (no arrivals detected in headway analysis)
+- [x] ~~Replace GHA collector with Cloudflare Worker~~ — Done: `worker/` deployed, GHA cron disabled
 
 ## Uncommitted changes
 Three fixes from audit feedback (not yet committed):
@@ -138,10 +178,10 @@ uv run pytest -v                    # run all 159 tests
 uv pip install -e . && uv run --no-sync jupyter lab  # interactive notebooks
 uv pip install -e . && uv run --no-sync jupyter execute notebooks/<NB>.ipynb --inplace  # execute a notebook
 
-# Collector
-ps aux | grep headway_collector     # check if running
-./run_collector.sh                  # start (foreground)
-sqlite3 data/headway.db "SELECT COUNT(*), COUNT(DISTINCT collected_at), COUNT(DISTINCT route) FROM vehicle_positions;"
+# Cloudflare Worker (headway collector)
+cd worker && npx wrangler tail      # live logs
+cd worker && npx wrangler deploy    # redeploy after changes
+curl https://bus-check-collector.<subdomain>.workers.dev/health  # check status
 ```
 
 ## Data sources
