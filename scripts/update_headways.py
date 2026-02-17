@@ -213,7 +213,7 @@ def update_prose(content: str, stats: dict) -> str:
             f'<div class="callout-info">\n'
             f"      <p><strong>Continuously updated.</strong> These results are based on "
             f"{hours} hours of real-time data collection "
-            f"({date_range}). Data is collected every 30 minutes and "
+            f"({date_range}). Data is collected every 5 minutes via a Cloudflare Worker and "
             f"this page updates daily.</p>\n"
             f"    </div>",
             content,
@@ -225,7 +225,7 @@ def update_prose(content: str, stats: dict) -> str:
             r".*?(Robust conclusions)",
             rf"\1 These results are based on approximately {hours} hours of "
             rf"real-time data collection ({date_range}). "
-            rf"Collection runs every 30 minutes via GitHub Actions and this page "
+            rf"Collection runs every 5 minutes via a Cloudflare Worker and this page "
             rf"updates daily. \2",
             content,
             flags=re.DOTALL,

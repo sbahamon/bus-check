@@ -229,7 +229,7 @@ def test_update_prose_preliminary_caveat_current_format():
     """Should update the callout even with the current 'automated' text format."""
     html = (
         '    <div class="callout-warning">\n'
-        '      <p><strong>Preliminary data.</strong> These results are based on approximately 0 hours of automated real-time data collection (Feb 14, 2026). Collection runs every 30 minutes via GitHub Actions and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>\n'
+        '      <p><strong>Preliminary data.</strong> These results are based on approximately 0 hours of automated real-time data collection (Feb 14, 2026). Collection runs every 5 minutes via a Cloudflare Worker and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>\n'
         '    </div>'
     )
     stats = {
@@ -248,7 +248,7 @@ def test_update_prose_preliminary_caveat_replaced_when_robust():
     """Should replace preliminary warning when >= 336 hours (2 weeks)."""
     html = (
         '    <div class="callout-warning">\n'
-        '      <p><strong>Preliminary data.</strong> These results are based on approximately 65 hours of real-time data collection (Feb 11&ndash;14, 2026). Collection runs every 30 minutes via GitHub Actions and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>\n'
+        '      <p><strong>Preliminary data.</strong> These results are based on approximately 65 hours of real-time data collection (Feb 11&ndash;14, 2026). Collection runs every 5 minutes via a Cloudflare Worker and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>\n'
         '    </div>'
     )
     stats = {

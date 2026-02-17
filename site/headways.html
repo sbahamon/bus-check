@@ -39,7 +39,7 @@
 <section>
   <div class="container">
     <div class="callout-warning">
-      <p><strong>Preliminary data.</strong> These results are based on approximately 99 hours of real-time data collection (Feb 11&ndash;16, 2026). Collection runs every 30 minutes via GitHub Actions and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
+      <p><strong>Preliminary data.</strong> These results are based on approximately 99 hours of real-time data collection (Feb 11&ndash;16, 2026). Collection runs every 5 minutes via a Cloudflare Worker and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
     </div>
 
     <h2>Schedule vs. Reality</h2>
@@ -84,7 +84,7 @@
   <div class="container prose">
     <h2>Limitations</h2>
     <ul>
-      <li><strong>Growing dataset.</strong> Data is collected automatically every 30 minutes during service hours and accumulates over time. Earlier results may be based on limited samples. At minimum, two weeks of continuous data across weekdays and weekends are needed for robust conclusions.</li>
+      <li><strong>Growing dataset.</strong> Data is collected automatically every 5 minutes during service hours via a Cloudflare Worker and accumulates over time. Earlier results may be based on limited samples. At minimum, two weeks of continuous data across weekdays and weekends are needed for robust conclusions.</li>
       <li><strong>Reference stop selection.</strong> We use a single reference stop per route (the midpoint). Headway performance may vary at different points along a route &mdash; buses can bunch or spread out as they travel.</li>
       <li><strong>Arrival detection.</strong> The 30-meter proximity threshold for detecting arrivals may occasionally miss stops or double-count vehicles that linger near a stop.</li>
     </ul>
