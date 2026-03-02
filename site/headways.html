@@ -39,7 +39,7 @@
 <section>
   <div class="container">
     <div class="callout-warning">
-      <p><strong>Preliminary data.</strong> These results are based on approximately 294 hours of real-time data collection (Feb 16&ndash;Mar 1, 2026). Collection runs every 5 minutes via a Cloudflare Worker and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
+      <p><strong>Preliminary data.</strong> These results are based on approximately 318 hours of real-time data collection (Feb 16&ndash;Mar 2, 2026). Collection runs every 5 minutes via a Cloudflare Worker and this page updates daily. Robust conclusions require at least two weeks of continuous monitoring. Treat these as early indicators, not definitive findings.</p>
     </div>
 
     <h2>Schedule vs. Reality</h2>
@@ -97,7 +97,7 @@
       <div>
         <dl class="footer-sources">
           <dt>Real-time positions</dt>
-          <dd>CTA Bus Tracker API &middot; ~294 hours collected (Feb 16&ndash;Mar 1, 2026) &middot; Updated daily</dd>
+          <dd>CTA Bus Tracker API &middot; ~318 hours collected (Feb 16&ndash;Mar 2, 2026) &middot; Updated daily</dd>
           <dt>Schedules</dt>
           <dd>CTA GTFS static feed</dd>
         </dl>
@@ -116,8 +116,8 @@ const PHASE_COLORS = {1:'#0066CC', 2:'#2A9D4E', 3:'#E67E22', 4:'#C0392B'};
 
 const HEADWAY_DATA = [
   {route:'79', name:'79th', phase:1, scheduled:100, observed:99},
-  {route:'66', name:'Chicago', phase:2, scheduled:100, observed:97},
   {route:'63', name:'63rd', phase:1, scheduled:100, observed:96},
+  {route:'66', name:'Chicago', phase:2, scheduled:100, observed:96},
   {route:'77', name:'Belmont', phase:3, scheduled:100, observed:96},
   {route:'20', name:'Madison', phase:2, scheduled:100, observed:95},
   {route:'12', name:'Roosevelt', phase:4, scheduled:100, observed:94},
@@ -130,8 +130,8 @@ const HEADWAY_DATA = [
   {route:'81', name:'Lawrence', phase:4, scheduled:100, observed:92},
   {route:'54', name:'Cicero', phase:1, scheduled:100, observed:91},
   {route:'95', name:'95th', phase:1, scheduled:100, observed:91},
+  {route:'4', name:'Cottage Grove', phase:2, scheduled:100, observed:91},
   {route:'49', name:'Western', phase:2, scheduled:100, observed:91},
-  {route:'4', name:'Cottage Grove', phase:2, scheduled:100, observed:90},
   {route:'J14', name:'Jeffery Jump', phase:1, scheduled:100, observed:89},
   {route:'9', name:'Ashland', phase:4, scheduled:100, observed:89},
   {route:'34', name:'South Michigan', phase:1, scheduled:100, observed:76},
